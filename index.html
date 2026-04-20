@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#1a1008">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Proofingo">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon.svg">
+<title>Proofingo</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/config.js"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  min-height: 100vh; min-height: 100dvh;
+  background: #1a1008; font-family: 'Courier New', Courier, monospace;
+  display: flex; align-items: center; justify-content: center;
+  padding: calc(24px + env(safe-area-inset-top)) 16px calc(24px + env(safe-area-inset-bottom));
+}
+body::before {
+  content: ''; position: fixed; inset: 0;
+  background-image: linear-gradient(rgba(255,170,0,0.04) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(255,170,0,0.04) 1px,transparent 1px);
+  background-size: 40px 40px; pointer-events: none;
+}
+.card { position: relative; width: min(92vw, 480px); text-align: center; }
+.eyebrow { font-size: 10px; letter-spacing: 5px; color: #7a6040; text-transform: uppercase; margin-bottom: 8px; }
+h1 { font-size: clamp(44px,12vw,80px); font-weight: 900; color: #ffaa00; letter-spacing: -2px; line-height: 1; text-shadow: 0 0 60px rgba(255,160,0,0.35); margin-bottom: 8px; white-space: nowrap; }
+.tagline { font-size: 11px; color: #8a6030; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 48px; }
+.btn { display: block; width: 100%; padding: 18px 16px; min-height: 52px; font-family: 'Courier New', Courier, monospace; font-size: 12px; font-weight: 700; letter-spacing: 4px; text-transform: uppercase; text-decoration: none; cursor: pointer; border-radius: 4px; transition: all 0.15s ease; touch-action: manipulation; margin-bottom: 10px; -webkit-tap-highlight-color: transparent; }
+.btn-primary { background: #ffaa00; color: #1a1008; border: 2px solid #ffaa00; }
+.btn-primary:hover { background: #ffcc44; }
+.btn-secondary { background: transparent; color: #ffaa00; border: 2px solid #3a2800; }
+.btn-secondary:hover { border-color: #ffaa00; }
+.admin-resume { background: #231b0d; border: 2px solid #4a3418; border-radius: 4px; padding: 14px 16px; margin-bottom: 10px; display: flex; align-items: center; gap: 12px; cursor: pointer; text-decoration: none; transition: border-color .15s; -webkit-tap-highlight-color: transparent; }
+.admin-resume:hover { border-color: #cc7700; }
+.admin-resume-label { font-size: 9px; letter-spacing: 3px; color: #907040; text-transform: uppercase; margin-bottom: 3px; }
+.admin-resume-name { font-size: 14px; font-weight: 700; color: #f0d090; letter-spacing: 0; }
+.admin-resume-icon { font-size: 18px; margin-left: auto; color: #cc7700; }
+.section-divider { font-size: 10px; color: #c09050; letter-spacing: 3px; margin: 16px 0; }
+.divider { font-size: 10px; color: #c09050; letter-spacing: 3px; margin: 16px 0; }
+.resume-wrap { display: flex; gap: 8px; }
+.resume-input { flex: 1; padding: 12px; background: #231b0d; border: 2px solid #4a3418; border-radius: 4px; color: #f0d090; font-family: 'Courier New', Courier, monospace; font-size: 12px; outline: none; }
+.resume-input:focus { border-color: #cc7700; }
+.resume-input::placeholder { color: #907040; opacity: 1; }
+.resume-btn { padding: 12px 16px; background: transparent; border: 2px solid #3a2800; border-radius: 4px; color: #ffaa00; font-family: 'Courier New', Courier, monospace; font-size: 11px; font-weight: 700; cursor: pointer; letter-spacing: 2px; white-space: nowrap; touch-action: manipulation; }
+.resume-btn:hover { border-color: #ffaa00; }
+.footer { margin-top: 40px; font-size: 12px; color: #4ecdc4; letter-spacing: 1px; }
+.footer .cup { font-size: 22px; vertical-align: middle; line-height: 1; }
+.resume-btn { min-height: 48px; }
+.error { font-size: 11px; color: #ff8080; margin-top: 8px; letter-spacing: 1px; display: none; }
+.error.show { display: block; }
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>PROOFINGO</h1>
+  <div class="tagline">Show Your Proof Edition</div>
+
+  <!-- Existing admin groups shown here if stored -->
+  <div id="admin-groups"></div>
+
+  <a href="admin.html?new=1" class="btn btn-primary" id="btn-create">Create New Group</a>
+
+  <div class="divider">— OR RESUME BY ID —</div>
+
+  <div class="resume-wrap">
+    <input class="resume-input" id="gid-input" type="text" placeholder="Paste Group ID..." autocomplete="off">
+    <button class="resume-btn" onclick="resumeGroup()">Go →</button>
+  </div>
+  <div class="error" id="resume-error"></div>
+
+  <div class="footer"><span class="cup">☕</span> Created by D. Garniss under the influence of <strong>A LOT</strong> of coffee <span class="cup">☕</span></div>
+</div>
+<script>
+// Load all groups — admin dashboards + player invite groups
+async function loadAllGroups() {
+  const container = document.getElementById('admin-groups');
+  const cards = [];
+
+  // ── Admin groups ──────────────────────────────────────────────
+  const adminIndex = JSON.parse(localStorage.getItem('bingo_admin_index') || '[]');
+  const legacy = localStorage.getItem('bingo_admin_gid');
+  if (legacy && !adminIndex.includes(legacy)) {
+    adminIndex.push(legacy);
+    localStorage.setItem('bingo_admin_index', JSON.stringify(adminIndex));
+  }
+  for (const gid of adminIndex) {
+    const { data: grp } = await db.from('groups').select('name').eq('id', gid).single();
+    if (!grp) {
+      // Group deleted — prune from index
+      const pruned = adminIndex.filter(id => id !== gid);
+      localStorage.setItem('bingo_admin_index', JSON.stringify(pruned));
+      continue;
+    }
+    cards.push({ type: 'admin', label: 'Dashboard', name: grp.name, href: `admin.html?gid=${gid}` });
+  }
+
+  // ── Player invite groups ──────────────────────────────────────
+  const playerIndex = JSON.parse(localStorage.getItem('bingo_session_index') || '[]');
+  for (const pid of playerIndex) {
+    let session;
+    try { session = JSON.parse(localStorage.getItem(`bingo_session_${pid}`)); } catch(e) { continue; }
+    if (!session) continue;
+    const { data: grp } = await db.from('groups').select('name').eq('id', session.groupId).single();
+    if (!grp) {
+      // Group ended — prune stale session
+      localStorage.removeItem(`bingo_session_${pid}`);
+      const pruned = playerIndex.filter(p => p !== pid);
+      localStorage.setItem('bingo_session_index', JSON.stringify(pruned));
+      continue;
+    }
+    cards.push({ type: 'player', label: `Playing as ${session.playerName}`, name: grp.name, href: `game.html?pid=${pid}`, color: session.playerColor });
+  }
+
+  if (cards.length === 0) return;
+
+  container.innerHTML = '<div class="section-divider">— YOUR GROUPS —</div>';
+
+  cards.forEach(card => {
+    const a = document.createElement('a');
+    a.href = card.href;
+    a.className = 'admin-resume';
+    const dot = card.type === 'player'
+      ? `<span style="width:10px;height:10px;border-radius:50%;background:${card.color};flex-shrink:0;display:inline-block;margin-right:2px"></span>`
+      : '';
+    a.innerHTML = `
+      <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0">
+        ${dot}
+        <div>
+          <div class="admin-resume-label">${card.label}</div>
+          <div class="admin-resume-name">${card.name}</div>
+        </div>
+      </div>
+      <span class="admin-resume-icon">→</span>
+    `;
+    container.appendChild(a);
+  });
+
+  container.insertAdjacentHTML('beforeend', '<div class="section-divider">— OR CREATE NEW —</div>');
+  document.getElementById('btn-create').textContent = '+ Create Another Group';
+}
+
+loadAllGroups();
+
+async function resumeGroup() {
+  const gid = document.getElementById('gid-input').value.trim();
+  if (!gid) return;
+  const { data, error } = await db.from('groups').select('id').eq('id', gid).single();
+  if (error || !data) {
+    const el = document.getElementById('resume-error');
+    el.textContent = 'Group not found. Check the ID.';
+    el.classList.add('show');
+    return;
+  }
+  window.location.href = `admin.html?gid=${gid}`;
+}
+document.getElementById('gid-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') resumeGroup();
+});
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => {}));
+}
+
+// ── Proofingo Install Banner ─────────────────────────────────────────
+(function() {
+  const DISMISSED_KEY = 'proofingo_install_dismissed';
+  const isIOS     = () => /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const isStandalone = () => window.navigator.standalone === true || window.matchMedia('(display-mode: standalone)').matches;
+  const isChrome  = () => /crios/i.test(navigator.userAgent);
+
+  function injectStyles() {
+    if (document.getElementById('pi-banner-css')) return;
+    const s = document.createElement('style');
+    s.id = 'pi-banner-css';
+    s.textContent = `
+      @keyframes piSlideUp   { from { transform:translateX(-50%) translateY(120%); opacity:0 } to { transform:translateX(-50%) translateY(0); opacity:1 } }
+      @keyframes piSlideDown { from { transform:translateX(-50%) translateY(-120%); opacity:0 } to { transform:translateX(-50%) translateY(0); opacity:1 } }
+      @keyframes piExitDown  { from { transform:translateX(-50%) translateY(0); opacity:1 } to { transform:translateX(-50%) translateY(120%); opacity:0 } }
+      @keyframes piExitUp    { from { transform:translateX(-50%) translateY(0); opacity:1 } to { transform:translateX(-50%) translateY(-120%); opacity:0 } }
+      @keyframes piCaretPulse { 0%,100% { opacity:0.5 } 50% { opacity:1 } }
+      #pi-banner-backdrop { position:fixed;inset:0;z-index:9998;background:rgba(0,0,0,0.6);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);transition:opacity .3s ease; }
+      #pi-banner {
+        position:fixed; left:50%; z-index:9999;
+        width:min(380px,calc(100vw - 24px));
+        font-family:'Courier New',Courier,monospace;
+        border-radius:14px;
+        background:linear-gradient(160deg,#231b0d 0%,#1a1008 100%);
+        border:1.5px solid #4a3418;
+        box-shadow:0 24px 60px rgba(0,0,0,0.8),inset 0 0 0 1px rgba(255,170,0,0.06);
+      }
+      #pi-banner.from-bottom { bottom:14px; animation:piSlideUp   .4s cubic-bezier(.22,1,.36,1) forwards; }
+      #pi-banner.from-top    { top:14px;    animation:piSlideDown .4s cubic-bezier(.22,1,.36,1) forwards; }
+      #pi-banner.exit-down   { animation:piExitDown .3s cubic-bezier(.4,0,1,1) forwards !important; }
+      #pi-banner.exit-up     { animation:piExitUp   .3s cubic-bezier(.4,0,1,1) forwards !important; }
+      .pi-inner { padding:16px 16px 14px; }
+      .pi-header { display:flex; align-items:center; gap:12px; margin-bottom:12px; }
+      .pi-icon { width:52px;height:52px;border-radius:12px;background:#2e2210;border:1.5px solid #4a3418;flex-shrink:0;display:flex;align-items:center;justify-content:center;overflow:hidden;padding:6px; }
+      .pi-icon img { width:100%;height:100%;object-fit:contain; }
+      .pi-title { font-size:14px;font-weight:700;color:#f0d090;letter-spacing:-.2px;line-height:1.25; }
+      .pi-sub { font-size:10px;color:#907040;letter-spacing:1px;margin-top:3px;text-transform:uppercase; }
+      .pi-close { margin-left:auto;flex-shrink:0;background:rgba(255,170,0,0.07);border:1px solid #4a3418;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#907040;padding:0;touch-action:manipulation; }
+      .pi-close:hover { border-color:#cc7700;color:#ffaa00; }
+      .pi-divider { height:1px;background:#2e2210;margin-bottom:12px; }
+      .pi-browser-tag { display:inline-flex;align-items:center;gap:5px;background:rgba(255,170,0,0.06);border:1px solid #4a3418;border-radius:20px;padding:3px 10px;font-size:10px;color:#907040;letter-spacing:1px;margin-bottom:10px; }
+      .pi-steps { display:flex;flex-direction:column;gap:0; }
+      .pi-step { display:flex;align-items:stretch;gap:10px; }
+      .pi-step-spine { display:flex;flex-direction:column;align-items:center;flex-shrink:0; }
+      .pi-step-num { width:20px;height:20px;border-radius:50%;background:rgba(255,170,0,0.15);border:1px solid rgba(255,170,0,0.3);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#cc7700;flex-shrink:0;margin-top:10px; }
+      .pi-step-line { width:1px;flex:1;background:rgba(255,170,0,0.12);margin:3px 0; }
+      .pi-step-body { flex:1;display:flex;align-items:center;gap:10px;padding:8px 0; }
+      .pi-step-ico { width:30px;height:30px;border-radius:7px;background:rgba(255,170,0,0.08);border:1px solid rgba(255,170,0,0.2);flex-shrink:0;display:flex;align-items:center;justify-content:center;color:#cc7700; }
+      .pi-step-text { font-size:12px;line-height:1.5;color:#c09050; }
+      .pi-step-text strong { color:#f0d090; }
+      .pi-note { background:rgba(255,170,0,0.05);border:1px solid rgba(255,170,0,0.15);border-radius:8px;padding:9px 11px;margin-top:11px;display:flex;gap:8px;align-items:flex-start; }
+      .pi-note-text { font-size:10px;color:#907040;line-height:1.6;letter-spacing:.3px; }
+      .pi-dont-show { display:block;width:100%;text-align:center;background:none;border:none;cursor:pointer;font-family:'Courier New',Courier,monospace;font-size:10px;color:#4a3418;letter-spacing:2px;padding:8px 0 2px;touch-action:manipulation; }
+      .pi-dont-show:hover { color:#907040; }
+      .pi-caret { display:block;text-align:center;font-size:20px;color:#cc7700;animation:piCaretPulse 1.2s ease-in-out infinite;line-height:1;padding:0 0 4px; }
+      .pi-caret-top { padding:4px 0 0; }
+    `;
+    document.head.appendChild(s);
+  }
+
+  function buildShareBadge() {
+    return `<span style="display:inline-flex;align-items:center;vertical-align:middle;background:rgba(255,170,0,0.1);border:1px solid rgba(255,170,0,0.25);border-radius:4px;padding:1px 4px;margin:0 2px;">
+      <svg width="11" height="11" viewBox="0 0 50 62" fill="none"><line x1="25" y1="40" x2="25" y2="4" stroke="#cc7700" stroke-width="5" stroke-linecap="round"/><polyline points="13,16 25,3 37,16" fill="none" stroke="#cc7700" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/><path d="M10 28 L10 54 L40 54 L40 28" fill="none" stroke="#cc7700" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </span>`;
+  }
+
+  function show(force) {
+    if (!isIOS() || isStandalone()) return;
+    if (!force && localStorage.getItem(DISMISSED_KEY)) return;
+
+    document.getElementById('pi-banner-backdrop')?.remove();
+    document.getElementById('pi-banner')?.remove();
+
+    injectStyles();
+
+    const chrome  = isChrome();
+    const atTop   = chrome; // Chrome toolbar is at top, caret points up
+    const sb      = buildShareBadge();
+
+    const steps = chrome ? [
+      { icon: shareIco(),  text: `Tap the <strong>Share</strong> button ${sb} in the address bar` },
+      { icon: moreIco(),   text: `Scroll the sheet and tap <strong>"View More"</strong>` },
+      { icon: addIco(),    text: `Tap <strong>"Add to Home Screen"</strong>` },
+    ] : [
+      { icon: shareIco(),  text: `Tap the <strong>Share</strong> button ${sb} in Safari's toolbar` },
+      { icon: addIco(),    text: `Scroll down and tap <strong>"Add to Home Screen"</strong>` },
+    ];
+
+    const stepsHtml = steps.map((s, i) => `
+      <div class="pi-step">
+        <div class="pi-step-spine">
+          <div class="pi-step-num">${i + 1}</div>
+          ${i < steps.length - 1 ? '<div class="pi-step-line"></div>' : ''}
+        </div>
+        <div class="pi-step-body">
+          <div class="pi-step-ico">${s.icon}</div>
+          <span class="pi-step-text">${s.text}</span>
+        </div>
+      </div>
+    `).join('');
+
+    const backdrop = document.createElement('div');
+    backdrop.id = 'pi-banner-backdrop';
+
+    const banner = document.createElement('div');
+    banner.id = 'pi-banner';
+    banner.className = atTop ? 'from-top' : 'from-bottom';
+    banner.innerHTML = `
+      <div class="pi-inner">
+        <div class="pi-header">
+          <div class="pi-icon"><img src="icons/icon.svg" alt="Proofingo"></div>
+          <div>
+            <div class="pi-title">Add Proofingo to Home Screen</div>
+            <div class="pi-sub">Play instantly — no app store needed</div>
+          </div>
+          <button class="pi-close" id="pi-close-x" aria-label="Close">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </button>
+        </div>
+        <div class="pi-divider"></div>
+        <div class="pi-browser-tag">${chrome ? '🟡 Chrome' : '🧭 Safari'}</div>
+        <div class="pi-steps">${stepsHtml}</div>
+        <div class="pi-note">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#cc7700" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:1px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          <span class="pi-note-text">Installing to your home screen gives you a full-screen experience with faster load times.</span>
+        </div>
+        ${!atTop ? '<span class="pi-caret">▼</span>' : ''}
+        <button class="pi-dont-show" id="pi-dont-show">DON'T SHOW AGAIN</button>
+      </div>
+      ${atTop ? '<span class="pi-caret pi-caret-top" style="display:block;text-align:center;padding:2px 0 8px;">▲</span>' : ''}
+    `;
+
+    function dismiss(persist) {
+      backdrop.style.opacity = '0';
+      banner.classList.remove('from-bottom','from-top');
+      banner.classList.add(atTop ? 'exit-up' : 'exit-down');
+      if (persist) localStorage.setItem(DISMISSED_KEY, '1');
+      setTimeout(() => { backdrop.remove(); banner.remove(); }, 320);
+    }
+
+    document.body.appendChild(backdrop);
+    document.body.appendChild(banner);
+    backdrop.addEventListener('click',                                     () => dismiss(false));
+    document.getElementById('pi-close-x')?.addEventListener('click',      () => dismiss(false));
+    document.getElementById('pi-dont-show')?.addEventListener('click',    () => dismiss(true));
+  }
+
+  function shareIco() { return `<svg width="16" height="16" viewBox="0 0 50 62" fill="none"><line x1="25" y1="40" x2="25" y2="4" stroke="currentColor" stroke-width="5" stroke-linecap="round"/><polyline points="13,16 25,3 37,16" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/><path d="M10 28 L10 54 L40 54 L40 28" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg>`; }
+  function addIco()   { return `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>`; }
+  function moreIco()  { return `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="8,10 12,14 16,10"/></svg>`; }
+
+  // Auto-show after 1.5s if not dismissed
+  if (isIOS() && !isStandalone()) {
+    setTimeout(() => show(false), 1500);
+  }
+})();
+</script>
+</body>
+</html>

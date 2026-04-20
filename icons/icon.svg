@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <radialGradient id="glow" cx="50%" cy="54%" r="45%">
+      <stop offset="0%" stop-color="#ffaa00" stop-opacity="0.22"/>
+      <stop offset="100%" stop-color="#ffaa00" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="512" height="512" rx="80" fill="#1a1008"/>
+  <rect width="512" height="512" rx="80" fill="url(#glow)"/>
+
+  <!-- BINGO header -->
+  <text x="256" y="92" font-family="'Courier New', Courier, monospace" font-weight="900"
+        font-size="72" fill="#ffaa00" text-anchor="middle" letter-spacing="18">BINGO</text>
+
+  <!-- 5x5 grid: cells 72×72, gap 7px -->
+  <!-- Col x: 60 139 218 297 376 -->
+  <!-- Row y: 110 189 268 347 426 -->
+
+  <!-- Unmarked cell style: dark fill + border -->
+  <!-- Marked (diagonal TL→BR): pos 0,6,12,18,24 -->
+
+  <!-- Row 0 -->
+  <rect x="60"  y="110" width="72" height="72" rx="9" fill="#cc7700"/>
+  <rect x="139" y="110" width="72" height="72" rx="9" fill="#1d1409" stroke="#2e2010" stroke-width="2"/>
+  <rect x="218" y="110" width="72" height="72" rx="9" fill="#1d1409" stroke="#2e2010" stroke-width="2"/>
+  <rect x="297" y="110" width="72" height="72" rx="9" fill="#1d1409" stroke="#2e2010" stroke-width="2"/>
+  <rect x="376" y="110" width="72" height="72" rx="9" fill="#1d1409" stroke="#2e2010" stroke-width="2"/>
+
+  <!-- Row 1 -->
+  <rect x="60"  y="189" width="72" height="72" rx="9" fill="#1d1409" stroke="#2e2010" stroke-width="2"/>
+  <rect x="139" y="189" width="72" height="72" rx="9" fill="#cc7700"/>
+  <rect x="218" y="189" width="72" height="72" rx="9" fill="#1d1409" stroke="#2e2010" stroke-width="2"/>
+  <rect x="297" y="189" width="72" height="72" rx="9" fill="#1d1409" stroke="#2e2010" stroke-width="2"/>
+  <rect x="376" y="189" width="72" height="72" rx="9" fill="#1d1409" stroke="#2e2010" stroke-width="2"/>
+
+  <!-- Row 2 — FREE center (brightest) -->
+  <rect x="60"  y="268" width="72" height="72" rx="9" fill="#1d1409" stroke="#2e2010" stroke-width="2"/>
+  <rect x="139" y="268" width="72" height="72" rx="9" fill="#1d1409" stroke="#2e2010" stroke-width="2"/>
+  <rect x="218" y="268" width="72" height="72" rx="9" fill="#ffaa00"/>
+  <text x="254" y="314" font-family="'Courier New', Courier, monospace" font-weight="900"
+        font-size="18" fill="#1a1008" text-anchor="middle">FREE</text>
+  <rect x="297" y="268" width="72" height="72" rx="9" fill="#1d1409" stroke="#2e2010" stroke-width="2"/>
+  <rect x="376" y="268" width="72" height="72" rx="9" fill="#1d1409" stroke="#2e2010" stroke-width="2"/>
+
+  <!-- Row 3 -->
+  <rect x="60"  y="347" width="72" height="72" rx="9" fill="#1d1409" stroke="#2e2010" stroke-width="2"/>
+  <rect x="139" y="347" width="72" height="72" rx="9" fill="#1d1409" stroke="#2e2010" stroke-width="2"/>
+  <rect x="218" y="347" width="72" height="72" rx="9" fill="#1d1409" stroke="#2e2010" stroke-width="2"/>
+  <rect x="297" y="347" width="72" height="72" rx="9" fill="#cc7700"/>
+  <rect x="376" y="347" width="72" height="72" rx="9" fill="#1d1409" stroke="#2e2010" stroke-width="2"/>
+
+  <!-- Row 4 -->
+  <rect x="60"  y="426" width="72" height="72" rx="9" fill="#1d1409" stroke="#2e2010" stroke-width="2"/>
+  <rect x="139" y="426" width="72" height="72" rx="9" fill="#1d1409" stroke="#2e2010" stroke-width="2"/>
+  <rect x="218" y="426" width="72" height="72" rx="9" fill="#1d1409" stroke="#2e2010" stroke-width="2"/>
+  <rect x="297" y="426" width="72" height="72" rx="9" fill="#1d1409" stroke="#2e2010" stroke-width="2"/>
+  <rect x="376" y="426" width="72" height="72" rx="9" fill="#cc7700"/>
+</svg>

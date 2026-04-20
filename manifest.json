@@ -1,0 +1,31 @@
+{
+  "name": "Proofingo",
+  "short_name": "Proofingo",
+  "description": "Real-time multiplayer Proofingo — show your proof!",
+  "start_url": "/index.html",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#1a1008",
+  "theme_color": "#1a1008",
+  "icons": [
+    {
+      "src": "icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Admin Dashboard",
+      "url": "/admin.html",
+      "description": "Manage groups and games"
+    }
+  ]
+}

@@ -1,0 +1,830 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#1a1008">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Proofingo">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon.svg">
+<title>Proofingo</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/config.js"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg:#1a1008; --bg2:#231b0d; --bg3:#2e2210;
+  --amber:#ffaa00; --amber-dim:#cc7700; --amber-dark:#3a2200;
+  --text:#f0d090; --text-dim:#c09050; --text-muted:#907040;
+  --border:#4a3418; --font:'Courier New',Courier,monospace;
+}
+html,body { min-height:100%; min-height:100dvh; background:var(--bg); color:var(--text); font-family:var(--font); overflow-x:hidden; overscroll-behavior:none; }
+body::before {
+  content:''; position:fixed; inset:0;
+  background-image:linear-gradient(rgba(255,170,0,0.04) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(255,170,0,0.04) 1px,transparent 1px);
+  background-size:40px 40px; pointer-events:none; z-index:0;
+}
+
+/* ---- Shared ---- */
+.spinner { display:inline-block; width:14px; height:14px; border:2px solid rgba(255,170,0,0.2); border-top-color:var(--amber); border-radius:50%; animation:spin .6s linear infinite; }
+@keyframes spin { to { transform:rotate(360deg); } }
+
+/* ================================================================
+   LOADING SCREEN
+   ================================================================ */
+#screen-loading {
+  position:fixed; inset:0; display:flex; flex-direction:column;
+  align-items:center; justify-content:center; gap:16px; z-index:50;
+}
+#screen-loading .spinner { width:24px; height:24px; }
+#screen-loading p { font-size:11px; letter-spacing:3px; color:var(--text-muted); text-transform:uppercase; }
+
+/* ================================================================
+   ERROR SCREEN
+   ================================================================ */
+#screen-error {
+  display:none; position:fixed; inset:0; flex-direction:column;
+  align-items:center; justify-content:center;
+  padding:calc(32px + env(safe-area-inset-top)) 32px calc(32px + env(safe-area-inset-bottom));
+  text-align:center; z-index:50;
+}
+#screen-error.show { display:flex; }
+#screen-error h2 { font-size:28px; font-weight:900; color:#ff6b6b; margin-bottom:12px; }
+#screen-error p { font-size:13px; color:var(--text-muted); letter-spacing:1px; line-height:1.6; max-width:320px; margin-bottom:24px; }
+#screen-error a { color:var(--amber); text-decoration:none; font-size:12px; letter-spacing:2px; }
+
+/* ================================================================
+   WAITING SCREEN
+   ================================================================ */
+#screen-waiting {
+  display:none; position:fixed; inset:0; flex-direction:column;
+  align-items:center; justify-content:center;
+  padding:calc(32px + env(safe-area-inset-top)) 32px calc(32px + env(safe-area-inset-bottom));
+  text-align:center; z-index:40;
+}
+#screen-waiting.show { display:flex; }
+.waiting-dot { width:20px; height:20px; border-radius:50%; margin:0 auto 20px; }
+.waiting-name { font-size:clamp(28px,7vw,44px); font-weight:900; color:#fff; letter-spacing:-1px; margin-bottom:8px; }
+.waiting-title { font-size:clamp(32px,8vw,52px); font-weight:900; color:var(--amber); letter-spacing:-2px; text-shadow:0 0 40px rgba(255,160,0,0.35); margin-bottom:20px; }
+.waiting-sub { font-size:13px; color:var(--text-dim); letter-spacing:1px; text-transform:none; line-height:1.7; margin-bottom:32px; max-width:300px; text-align:center; }
+.waiting-pulse { display:flex; gap:8px; justify-content:center; }
+.pulse-dot { width:8px; height:8px; border-radius:50%; background:var(--amber); opacity:.3; animation:pulse 1.4s ease-in-out infinite; }
+.pulse-dot:nth-child(2) { animation-delay:.2s; }
+.pulse-dot:nth-child(3) { animation-delay:.4s; }
+@keyframes pulse { 0%,100%{opacity:.2;transform:scale(.8)} 50%{opacity:.9;transform:scale(1.1)} }
+
+/* ================================================================
+   GAME SCREEN
+   ================================================================ */
+#screen-game { display:none; position:relative; z-index:1; }
+#screen-game.show { display:block; }
+
+/* Top bar */
+.topbar {
+  display:flex; align-items:center; gap:10px;
+  padding:calc(10px + env(safe-area-inset-top)) 14px 10px;
+  border-bottom:1px solid var(--border);
+  background:rgba(26,16,8,0.96); position:sticky; top:0; z-index:10; backdrop-filter:blur(8px);
+}
+.tb-back { background:none; border:none; color:var(--text-muted); font-size:18px; cursor:pointer; padding:4px 6px; line-height:1; touch-action:manipulation; -webkit-tap-highlight-color:transparent; flex-shrink:0; transition:color .15s; }
+.tb-back:hover { color:var(--amber); }
+.tb-left { display:flex; flex-direction:column; }
+.tb-game { font-size:9px; letter-spacing:3px; color:var(--text-muted); text-transform:uppercase; }
+.tb-name { font-size:15px; font-weight:900; color:var(--amber); letter-spacing:-0.5px; }
+.tb-right { display:flex; align-items:center; gap:8px; }
+.tb-dot { width:10px; height:10px; border-radius:50%; }
+.tb-player { font-size:13px; font-weight:700; color:var(--text); }
+
+/* Board */
+.board-wrap { padding:10px 10px 4px; }
+.bingo-letters { display:grid; grid-template-columns:repeat(4,1fr); gap:4px; margin-bottom:4px; max-width:520px; margin-left:auto; margin-right:auto; }
+.bingo-l { text-align:center; font-size:clamp(16px,4vw,26px); font-weight:900; color:var(--amber); text-shadow:0 0 16px rgba(255,160,0,0.4); }
+.grid { display:grid; grid-template-columns:repeat(4,1fr); gap:4px; max-width:520px; margin:0 auto; }
+
+/* Cells */
+.cell {
+  aspect-ratio:1; display:flex; align-items:center; justify-content:center;
+  text-align:center; padding:5px 3px;
+  background:linear-gradient(135deg,#1c1408,#221a0c);
+  border:2px solid var(--border); border-radius:4px;
+  cursor:pointer; position:relative; overflow:hidden;
+  user-select:none; -webkit-tap-highlight-color:transparent; touch-action:manipulation;
+}
+.cell:hover:not(.free):not(.marked):not(.winning) { border-color:#553010; background:linear-gradient(135deg,#221808,#2a200e); }
+.cell.marked {
+  background:linear-gradient(135deg,#4a2e00,#5c3a00);
+  border:3px solid var(--amber);
+  box-shadow:0 0 14px rgba(255,160,0,0.4),inset 0 0 14px rgba(255,140,0,0.2);
+}
+.cell.winning {
+  background:linear-gradient(135deg,#5c3a00,#704500);
+  border:3px solid #ffe066;
+  box-shadow:0 0 22px rgba(255,210,0,0.65),inset 0 0 14px rgba(255,180,0,0.2);
+}
+.cell.free { cursor:default; background:linear-gradient(135deg,#2a1800,#3a2200); border:2px solid var(--amber-dim); }
+.cell-stamp { position:absolute; inset:0; display:none; align-items:center; justify-content:center; font-size:clamp(28px,7vw,44px); color:var(--amber); opacity:0.3; pointer-events:none; }
+.cell.marked .cell-stamp { display:flex; }
+.cell-text { font-size:clamp(7.5px,1.75vw,11.5px); line-height:1.4; color:#c8a060; font-weight:600; white-space:pre-line; position:relative; z-index:1; }
+.cell.marked .cell-text { color:#fff0c0; font-weight:800; }
+.cell.free .cell-text { color:var(--amber); font-weight:900; }
+.cell.winning .cell-text { color:#ffe480; }
+
+/* Scoreboard */
+.scoreboard { max-width:520px; margin:8px auto 0; padding:0 10px calc(32px + env(safe-area-inset-bottom)); }
+.sb-header { display:flex; align-items:center; justify-content:space-between; font-size:9px; letter-spacing:4px; color:var(--text-muted); text-transform:uppercase; padding-top:10px; border-top:1px solid var(--border); margin-bottom:10px; }
+.sb-meta { display:flex; align-items:center; gap:8px; }
+#sb-updated { font-size:9px; letter-spacing:1px; color:var(--text-muted); text-transform:none; white-space:nowrap; }
+.sb-refresh { background:none; border:1px solid var(--border); border-radius:4px; color:var(--text-dim); font-size:14px; line-height:1; padding:3px 7px; cursor:pointer; touch-action:manipulation; transition:all .15s; -webkit-tap-highlight-color:transparent; }
+.sb-refresh:hover { border-color:var(--amber-dim); color:var(--amber); }
+.sb-refresh.spinning { animation:spin .5s linear; }
+@keyframes sb-spin { to { transform:rotate(360deg); } }
+.sb-refresh.spinning { animation:sb-spin .5s linear; }
+.sb-row { display:flex; align-items:center; gap:10px; padding:10px 12px; margin-bottom:6px; background:var(--bg2); border:2px solid var(--border); border-radius:5px; transition:border-color .2s; }
+.sb-row.is-you { border-color:#3a2800; }
+.sb-row.has-bingo { border-color:var(--amber); box-shadow:0 0 10px rgba(255,160,0,0.2); }
+.sb-dot { width:11px; height:11px; border-radius:50%; flex-shrink:0; }
+.sb-info { flex:1; min-width:0; }
+.sb-name { font-size:13px; font-weight:700; color:var(--text); display:flex; align-items:center; gap:6px; }
+.sb-you { font-size:8px; letter-spacing:2px; color:var(--bg); background:var(--amber); padding:2px 5px; border-radius:2px; font-weight:900; flex-shrink:0; }
+.sb-bar-bg { background:var(--border); border-radius:2px; height:5px; overflow:hidden; margin-top:4px; }
+.sb-bar-fill { height:100%; background:var(--amber-dim); border-radius:2px; transition:width .3s ease; }
+.sb-bar-fill.bingo-fill { background:var(--amber); }
+.sb-right { text-align:right; flex-shrink:0; }
+.sb-count { font-size:10px; color:var(--text-muted); letter-spacing:1px; }
+.sb-bingo-badge { font-size:10px; letter-spacing:1px; color:var(--bg); background:var(--amber); padding:3px 7px; border-radius:2px; font-weight:900; white-space:nowrap; }
+
+/* ================================================================
+   LOBBY SCREEN (player read-only group view)
+   ================================================================ */
+#screen-lobby { display:none; position:relative; z-index:1; min-height:100dvh; }
+#screen-lobby.show { display:block; }
+.lobby-wrap { padding:16px; max-width:520px; margin:0 auto; padding-bottom:calc(40px + env(safe-area-inset-bottom)); }
+.lobby-slabel { font-size:10px; letter-spacing:4px; color:var(--text-muted); text-transform:uppercase; padding-bottom:8px; border-bottom:1px solid var(--border); margin-bottom:12px; margin-top:24px; }
+.lobby-player-row { display:flex; align-items:center; gap:10px; padding:10px 12px; background:var(--bg2); border:2px solid var(--border); border-radius:4px; margin-bottom:8px; }
+.lobby-player-row.is-you { border-color:var(--amber-dark); }
+.lobby-player-name { font-size:13px; font-weight:700; color:var(--text); flex:1; }
+.lobby-you-tag { font-size:8px; letter-spacing:2px; color:var(--bg); background:var(--amber); padding:2px 5px; border-radius:2px; font-weight:900; }
+.lobby-game-card { background:var(--bg2); border:2px solid var(--border); border-radius:5px; padding:16px; }
+.lobby-game-card.is-active { border-color:var(--amber); box-shadow:0 0 12px rgba(255,160,0,0.2); }
+.lobby-game-name { font-size:15px; font-weight:700; color:var(--text); margin-bottom:6px; }
+.lobby-badge { display:inline-block; font-size:9px; letter-spacing:2px; padding:3px 8px; border-radius:2px; font-weight:900; text-transform:uppercase; margin-bottom:14px; }
+.lobby-badge-active { background:var(--amber); color:var(--bg); }
+.lobby-badge-setup { background:var(--bg3); color:var(--text-muted); border:1px solid var(--border); }
+.lobby-enter-btn { display:block; width:100%; padding:14px; background:var(--amber); color:var(--bg); border:none; border-radius:4px; font-family:var(--font); font-size:12px; font-weight:900; letter-spacing:3px; text-transform:uppercase; cursor:pointer; touch-action:manipulation; -webkit-tap-highlight-color:transparent; transition:background .15s; }
+.lobby-enter-btn:hover { background:#ffcc44; }
+.lobby-waiting-msg { font-size:12px; color:var(--text-muted); letter-spacing:1px; line-height:1.7; text-align:center; padding:20px 0 8px; }
+.lobby-pulse { display:flex; gap:8px; justify-content:center; margin-top:12px; }
+
+/* Bingo overlay */
+#bingo-overlay {
+  display:none; position:fixed; inset:0; z-index:100;
+  background:rgba(26,16,8,0.94); flex-direction:column;
+  align-items:center; justify-content:center; text-align:center;
+  padding:calc(32px + env(safe-area-inset-top)) 32px calc(32px + env(safe-area-inset-bottom));
+  animation:fadeIn .3s ease;
+}
+#bingo-overlay.show { display:flex; }
+@keyframes fadeIn { from{opacity:0} to{opacity:1} }
+.overlay-emoji { font-size:72px; margin-bottom:16px; }
+.overlay-title { font-size:clamp(32px,10vw,56px); font-weight:900; color:var(--amber); letter-spacing:-2px; text-shadow:0 0 40px rgba(255,160,0,0.6); margin-bottom:8px; }
+.overlay-sub { font-size:13px; color:var(--text-dim); letter-spacing:3px; margin-bottom:12px; }
+.overlay-name { font-size:clamp(22px,6vw,36px); font-weight:900; color:#fff; margin-bottom:32px; letter-spacing:-1px; }
+.overlay-dismiss { padding:14px 32px; background:transparent; color:var(--amber); border:2px solid var(--amber); border-radius:4px; font-family:var(--font); font-size:11px; font-weight:700; letter-spacing:3px; text-transform:uppercase; cursor:pointer; touch-action:manipulation; }
+.overlay-dismiss:hover { background:rgba(255,170,0,0.1); }
+</style>
+</head>
+<body>
+
+<!-- Loading -->
+<div id="screen-loading">
+  <div class="spinner"></div>
+  <p>Joining game...</p>
+</div>
+
+<!-- Error -->
+<div id="screen-error">
+  <h2>Oops</h2>
+  <p id="error-message">Something went wrong. Check your invite link or ask the admin for a new one.</p>
+  <a href="index.html">← Back to Home</a>
+</div>
+
+<!-- Waiting for game to start -->
+<div id="screen-waiting">
+  <button onclick="goBack()" style="position:absolute;top:calc(12px + env(safe-area-inset-top));left:14px;background:none;border:none;color:var(--text-muted);font-family:var(--font);font-size:11px;letter-spacing:2px;cursor:pointer;padding:6px 4px;touch-action:manipulation;-webkit-tap-highlight-color:transparent;" onmouseover="this.style.color='var(--amber)'" onmouseout="this.style.color='var(--text-muted)'">⟵ BACK</button>
+  <div class="waiting-dot" id="waiting-dot"></div>
+  <div class="waiting-name" id="waiting-name"></div>
+  <div class="waiting-title">PROOFINGO</div>
+  <div class="waiting-sub">We're waiting for everyone to join. Your board will appear automatically the moment the admin starts the game — no need to refresh. If there's more than a 10 min delay, contact the admin from the message your link was sent from.</div>
+  <div class="waiting-pulse">
+    <div class="pulse-dot"></div>
+    <div class="pulse-dot"></div>
+    <div class="pulse-dot"></div>
+  </div>
+</div>
+
+<!-- Lobby (player read-only group view) -->
+<div id="screen-lobby">
+  <div class="topbar">
+    <button class="tb-back" onclick="goBack()" title="Back to home">⟵</button>
+    <div class="tb-left">
+      <span class="tb-game">GROUP</span>
+      <span class="tb-name" id="lobby-group-name">—</span>
+    </div>
+    <div class="tb-right">
+      <div class="tb-dot" id="lobby-dot"></div>
+      <span class="tb-player" id="lobby-player-name"></span>
+    </div>
+  </div>
+  <div class="lobby-wrap">
+    <div class="lobby-slabel" style="margin-top:8px">Players</div>
+    <div id="lobby-players"></div>
+    <div class="lobby-slabel">Game</div>
+    <div id="lobby-game-status"></div>
+  </div>
+</div>
+
+<!-- Game -->
+<div id="screen-game">
+  <div class="topbar">
+    <button class="tb-back" onclick="goBack()" title="Switch group">⟵</button>
+    <div class="tb-left">
+      <span class="tb-game" id="tb-game-name">BINGO</span>
+      <span class="tb-name">PROOFINGO</span>
+    </div>
+    <div class="tb-right">
+      <div class="tb-dot" id="tb-dot"></div>
+      <span class="tb-player" id="tb-player"></span>
+    </div>
+  </div>
+
+  <div class="board-wrap">
+    <div class="bingo-letters">
+      <div class="bingo-l">B</div><div class="bingo-l">I</div><div class="bingo-l">N</div>
+      <div class="bingo-l">G</div>
+    </div>
+    <div class="grid" id="grid"></div>
+  </div>
+
+  <div class="scoreboard">
+    <div class="sb-header">
+      <span>Live Scoreboard</span>
+      <div class="sb-meta">
+        <span id="sb-updated"></span>
+        <button class="sb-refresh" id="sb-refresh-btn" onclick="manualRefresh()" title="Refresh scores">↻</button>
+      </div>
+    </div>
+    <div id="sb-rows"></div>
+  </div>
+</div>
+
+<!-- Bingo overlay -->
+<div id="bingo-overlay">
+  <div class="overlay-emoji">🎯</div>
+  <div class="overlay-title">PROOFINGO!</div>
+  <div class="overlay-sub">WE HAVE A WINNER</div>
+  <div class="overlay-name" id="overlay-winner"></div>
+  <button class="overlay-dismiss" onclick="dismissOverlay()">Keep Playing</button>
+</div>
+
+<script>
+// ================================================================
+// State
+// ================================================================
+let playerId    = null;
+let playerName  = null;
+let playerColor = null;
+let groupId     = null;
+let gameId      = null;
+let gameName    = null;
+let myMarks     = new Set();
+let allPlayers  = [];
+let allMarks    = {};
+let squares     = Array(20).fill('');
+let seenBingos  = new Set();
+let channel     = null;
+let gridBuilt   = false;
+
+// ================================================================
+// SESSION STORAGE — multi-group, multi-admin support
+// Each session stored under bingo_session_<pid>
+// bingo_session_index holds the ordered list of known pids
+// ================================================================
+function saveSession(pid, data) {
+  localStorage.setItem(`bingo_session_${pid}`, JSON.stringify(data));
+  const index = JSON.parse(localStorage.getItem('bingo_session_index') || '[]');
+  if (!index.includes(pid)) {
+    index.push(pid);
+    localStorage.setItem('bingo_session_index', JSON.stringify(index));
+  }
+}
+
+function getAllSessions() {
+  const index = JSON.parse(localStorage.getItem('bingo_session_index') || '[]');
+  return index.map(pid => {
+    try { return JSON.parse(localStorage.getItem(`bingo_session_${pid}`)); } catch(e) { return null; }
+  }).filter(Boolean);
+}
+
+function removeSession(pid) {
+  localStorage.removeItem(`bingo_session_${pid}`);
+  const index = JSON.parse(localStorage.getItem('bingo_session_index') || '[]');
+  localStorage.setItem('bingo_session_index', JSON.stringify(index.filter(p => p !== pid)));
+}
+
+// ================================================================
+// BOOT
+// ================================================================
+window.addEventListener('DOMContentLoaded', async () => {
+  const params = new URLSearchParams(location.search);
+  const pid = params.get('pid');
+
+  if (pid) {
+    const { data: player, error } = await db.from('players').select('*').eq('id', pid).single();
+
+    // Group has been ended or link is invalid
+    if (error || !player) {
+      removeSession(pid);
+      const remaining = getAllSessions();
+      if (remaining.length === 1) { await bootFromSession(remaining[0]); return; }
+      if (remaining.length > 1)   { hideLoading(); showGroupPicker(remaining); return; }
+      showError('This invite link is no longer valid. The group may have ended — ask your admin for a new one.');
+      return;
+    }
+
+    const alreadyClaimed = localStorage.getItem(`bingo_session_${pid}`);
+
+    // Link already claimed by a different device
+    if (player.claimed && !alreadyClaimed) {
+      showError('This invite link has already been used on another device. Each link is personal — ask your admin to re-send yours.');
+      return;
+    }
+
+    // Claim the link on first use
+    if (!player.claimed) {
+      await db.from('players').update({ claimed: true }).eq('id', pid);
+    }
+
+    const isFirstClaim = !alreadyClaimed;
+    const session = {
+      playerId:    player.id,
+      playerName:  player.name,
+      playerColor: player.color,
+      groupId:     player.group_id
+    };
+    saveSession(pid, session);
+
+    // First time using the link — send them home to see their group card
+    if (isFirstClaim) {
+      window.location.replace('index.html');
+      return;
+    }
+
+    await bootFromSession(session);
+    return;
+  }
+
+  // No pid in URL — send back to home hub
+  window.location.replace('index.html');
+});
+
+async function bootFromSession(s) {
+  const { data: player } = await db.from('players').select('id').eq('id', s.playerId).single();
+  if (!player) {
+    removeSession(s.playerId);
+    showError('This group has ended. Ask your admin to invite you to a new group.');
+    return;
+  }
+
+  playerId    = s.playerId;
+  playerName  = s.playerName;
+  playerColor = s.playerColor;
+  groupId     = s.groupId;
+  await showLobby();
+}
+
+// ================================================================
+// GROUP PICKER — shown when player belongs to multiple groups
+// ================================================================
+function showGroupPicker(sessions) {
+  const screen = document.getElementById('screen-loading');
+  screen.style.cssText = 'position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:50;padding:calc(32px + env(safe-area-inset-top)) 24px calc(32px + env(safe-area-inset-bottom))';
+
+  screen.innerHTML = `
+    <div style="font-size:10px;letter-spacing:4px;color:var(--text-muted);text-transform:uppercase;margin-bottom:8px;text-align:center">You're in multiple games</div>
+    <div style="font-size:13px;color:var(--text-dim);letter-spacing:1px;margin-bottom:28px;text-align:center">Which one are you joining today?</div>
+    <div id="picker-list" style="width:100%;max-width:340px"></div>
+  `;
+
+  const list = document.getElementById('picker-list');
+  sessions.forEach(s => {
+    const btn = document.createElement('button');
+    btn.style.cssText = `
+      display:flex;align-items:center;gap:14px;width:100%;padding:16px 18px;
+      background:var(--bg2);border:2px solid var(--border);border-radius:6px;
+      color:var(--text);font-family:var(--font);font-size:15px;font-weight:700;
+      cursor:pointer;margin-bottom:10px;text-align:left;
+      touch-action:manipulation;-webkit-tap-highlight-color:transparent;
+      transition:border-color .15s;
+    `;
+    btn.innerHTML = `
+      <span style="width:14px;height:14px;border-radius:50%;background:${s.playerColor};flex-shrink:0;display:inline-block"></span>
+      <span>${s.playerName}</span>
+    `;
+    btn.addEventListener('pointerenter', () => btn.style.borderColor = 'var(--amber-dim)');
+    btn.addEventListener('pointerleave', () => btn.style.borderColor = 'var(--border)');
+    btn.addEventListener('click', async () => {
+      screen.innerHTML = '<div class="spinner"></div><p style="font-size:11px;letter-spacing:3px;color:var(--text-muted);text-transform:uppercase">Joining game...</p>';
+      screen.style.gap = '16px';
+      await bootFromSession(s);
+    });
+    list.appendChild(btn);
+  });
+}
+
+// ================================================================
+// LOBBY — player read-only group view
+// ================================================================
+async function showLobby() {
+  const { data: grp } = await db.from('groups').select('name').eq('id', groupId).single();
+  if (!grp) { showError('Group not found.'); return; }
+
+  document.getElementById('lobby-group-name').textContent = grp.name;
+  document.getElementById('lobby-dot').style.background   = playerColor;
+  document.getElementById('lobby-player-name').textContent = playerName;
+
+  const { data: players } = await db.from('players').select('*').eq('group_id', groupId).order('joined_at');
+  allPlayers = players || [];
+  renderLobbyPlayers();
+
+  const { data: games } = await db.from('games').select('*')
+    .eq('group_id', groupId).neq('status', 'finished')
+    .order('created_at', { ascending: false }).limit(1);
+  renderLobbyGame(games && games[0]);
+
+  hideLoading();
+  subscribeRealtime();
+  document.getElementById('screen-lobby').classList.add('show');
+}
+
+function renderLobbyPlayers() {
+  const c = document.getElementById('lobby-players');
+  if (!c) return;
+  c.innerHTML = '';
+  allPlayers.forEach(p => {
+    const isYou = p.id === playerId;
+    const row = document.createElement('div');
+    row.className = 'lobby-player-row' + (isYou ? ' is-you' : '');
+    row.innerHTML = `
+      <div class="tb-dot" style="background:${p.color}"></div>
+      <span class="lobby-player-name">${p.name}</span>
+      ${isYou ? '<span class="lobby-you-tag">YOU</span>' : ''}
+    `;
+    c.appendChild(row);
+  });
+}
+
+function renderLobbyGame(game) {
+  const c = document.getElementById('lobby-game-status');
+  if (!c) return;
+  if (!game) {
+    c.innerHTML = `
+      <div class="lobby-waiting-msg">No game set up yet.<br>The admin will create one soon.</div>
+      <div class="lobby-pulse">
+        <div class="pulse-dot"></div><div class="pulse-dot"></div><div class="pulse-dot"></div>
+      </div>`;
+    return;
+  }
+  if (game.status === 'active') {
+    c.innerHTML = `
+      <div class="lobby-game-card is-active">
+        <div class="lobby-game-name">${game.name}</div>
+        <div><span class="lobby-badge lobby-badge-active">● ACTIVE</span></div>
+        <button class="lobby-enter-btn" onclick="enterLobbyGame()">Enter Game →</button>
+      </div>`;
+  } else {
+    c.innerHTML = `
+      <div class="lobby-game-card">
+        <div class="lobby-game-name">${game.name}</div>
+        <div><span class="lobby-badge lobby-badge-setup">SETUP — WAITING TO ACTIVATE</span></div>
+        <div class="lobby-waiting-msg" style="padding-top:8px">The admin will start this game soon.</div>
+        <div class="lobby-pulse">
+          <div class="pulse-dot"></div><div class="pulse-dot"></div><div class="pulse-dot"></div>
+        </div>
+      </div>`;
+  }
+}
+
+async function enterLobbyGame() {
+  document.getElementById('screen-lobby').classList.remove('show');
+  document.getElementById('screen-loading').style.display = 'flex';
+  await startGame();
+}
+
+// ================================================================
+// START GAME — find active game in group
+// ================================================================
+async function startGame() {
+  const { data: players } = await db.from('players').select('*').eq('group_id', groupId).order('joined_at');
+  allPlayers = players || [];
+
+  document.getElementById('tb-dot').style.background    = playerColor;
+  document.getElementById('tb-player').textContent      = playerName;
+  document.getElementById('waiting-dot').style.background = playerColor;
+  document.getElementById('waiting-name').textContent   = playerName;
+
+  const { data: games } = await db.from('games').select('*')
+    .eq('group_id', groupId).eq('status', 'active').limit(1);
+
+  const activeGame = games && games[0];
+
+  hideLoading();
+  subscribeRealtime();
+
+  if (activeGame) {
+    await enterGame(activeGame);
+  } else {
+    showWaiting();
+  }
+}
+
+// ================================================================
+// ENTER GAME
+// ================================================================
+async function enterGame(game) {
+  gameId   = game.id;
+  gameName = game.name;
+
+  myMarks  = new Set();
+  allMarks = {};
+  seenBingos = new Set();
+  gridBuilt  = false;
+  allPlayers.forEach(p => { allMarks[p.id] = new Set(); });
+
+  document.getElementById('tb-game-name').textContent = game.name;
+
+  const { data: sqData } = await db.from('squares').select('*').eq('game_id', gameId);
+  squares = Array(20).fill('');
+  (sqData || []).forEach(s => { if (s.position < 20) squares[s.position] = s.text; });
+
+  const { data: markData } = await db.from('marks').select('*').eq('game_id', gameId);
+  (markData || []).forEach(m => {
+    if (allMarks[m.player_id]) allMarks[m.player_id].add(m.position);
+  });
+  myMarks = allMarks[playerId] || new Set();
+
+  const { data: bingoData } = await db.from('bingo_events').select('*').eq('game_id', gameId);
+  (bingoData || []).forEach(b => seenBingos.add(b.player_id));
+
+  buildGrid();
+  renderScoreboard();
+  showGame();
+}
+
+// ================================================================
+// GRID
+// ================================================================
+function buildGrid() {
+  const grid = document.getElementById('grid');
+  grid.innerHTML = '';
+  gridBuilt = true;
+
+  const winPos = getWinningPositions(checkBingo(myMarks));
+
+  for (let pos = 0; pos < 20; pos++) {
+    const isMarked = myMarks.has(pos);
+    const isWin    = winPos.has(pos);
+
+    const cell = document.createElement('div');
+    cell.className = 'cell' +
+      (isMarked ? ' marked' : '') +
+      (isWin ? ' winning' : '');
+    cell.dataset.pos = pos;
+
+    const stamp = document.createElement('div');
+    stamp.className = 'cell-stamp';
+    stamp.textContent = '✓';
+    cell.appendChild(stamp);
+
+    const txt = document.createElement('div');
+    txt.className = 'cell-text';
+    txt.style.whiteSpace = 'pre-line';
+    txt.textContent = squares[pos] || '';
+    cell.appendChild(txt);
+
+    cell.addEventListener('pointerdown', e => { e.preventDefault(); toggleMark(pos, cell); });
+    grid.appendChild(cell);
+  }
+}
+
+async function toggleMark(pos, cell) {
+  const wasMarked = myMarks.has(pos);
+
+  if (wasMarked) {
+    myMarks.delete(pos);
+    cell.classList.remove('marked', 'winning');
+  } else {
+    myMarks.add(pos);
+    cell.classList.add('marked');
+  }
+
+  updateWinHighlights();
+  renderScoreboard();
+
+  if (wasMarked) {
+    await db.from('marks').delete().eq('player_id', playerId).eq('game_id', gameId).eq('position', pos);
+  } else {
+    await db.from('marks').upsert(
+      { game_id: gameId, player_id: playerId, position: pos },
+      { onConflict: 'player_id,game_id,position' }
+    );
+  }
+
+  if (!wasMarked && hasBingo(myMarks) && !seenBingos.has(playerId)) {
+    seenBingos.add(playerId);
+    await db.from('bingo_events').upsert(
+      { game_id: gameId, player_id: playerId, player_name: playerName },
+      { onConflict: 'game_id,player_id' }
+    );
+  }
+}
+
+function updateWinHighlights() {
+  if (!gridBuilt) return;
+  const winPos = getWinningPositions(checkBingo(myMarks));
+  document.querySelectorAll('#grid .cell').forEach(cell => {
+    const pos = +cell.dataset.pos;
+    if (winPos.has(pos)) cell.classList.add('winning');
+    else cell.classList.remove('winning');
+  });
+}
+
+// ================================================================
+// SCOREBOARD
+// ================================================================
+function renderScoreboard() {
+  const sorted = [...allPlayers].sort((a,b) => {
+    const ab = hasBingo(allMarks[a.id]||new Set());
+    const bb = hasBingo(allMarks[b.id]||new Set());
+    if (ab&&!bb) return -1; if (!ab&&bb) return 1;
+    return (allMarks[b.id]||new Set()).size - (allMarks[a.id]||new Set()).size;
+  });
+
+  const now = new Date();
+  const time = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  const el = document.getElementById('sb-updated');
+  if (el) el.textContent = `Updated ${time}`;
+
+  const c = document.getElementById('sb-rows');
+  c.innerHTML = '';
+  sorted.forEach(p => {
+    const marks = p.id === playerId ? myMarks : (allMarks[p.id] || new Set());
+    const count = marks.size;
+    const bingo = hasBingo(marks);
+    const isYou = p.id === playerId;
+    const pct   = Math.round(count / 20 * 100);
+
+    const row = document.createElement('div');
+    row.className = 'sb-row' + (isYou?' is-you':'') + (bingo?' has-bingo':'');
+    row.id = `sb-${p.id}`;
+    row.innerHTML = `
+      <div class="sb-dot" style="background:${p.color}"></div>
+      <div class="sb-info">
+        <div class="sb-name">${p.name}${isYou?'<span class="sb-you">YOU</span>':''}</div>
+        <div class="sb-bar-bg"><div class="sb-bar-fill${bingo?' bingo-fill':''}" style="width:${pct}%"></div></div>
+      </div>
+      <div class="sb-right">
+        ${bingo ? '<div class="sb-bingo-badge">PROOFINGO 🎯</div>' : `<div class="sb-count">${count}/20</div>`}
+      </div>
+    `;
+    c.appendChild(row);
+  });
+}
+
+// ================================================================
+// REALTIME
+// ================================================================
+function subscribeRealtime() {
+  if (channel) db.removeChannel(channel);
+
+  channel = db.channel(`player-group-${groupId}`)
+
+    .on('postgres_changes', {
+      event: '*', schema: 'public', table: 'marks'
+    }, payload => {
+      if (!gameId) return;
+      const { eventType, new: n, old: o } = payload;
+      const pid = (n&&n.player_id)||(o&&o.player_id);
+      const gid = (n&&n.game_id)||(o&&o.game_id);
+      if (gid !== gameId || pid === playerId) return;
+      if (!allMarks[pid]) allMarks[pid] = new Set();
+      if (eventType==='INSERT') allMarks[pid].add(n.position);
+      if (eventType==='DELETE') allMarks[pid].delete(o.position);
+      renderScoreboard();
+    })
+
+    .on('postgres_changes', {
+      event: 'INSERT', schema: 'public', table: 'bingo_events'
+    }, payload => {
+      const evt = payload.new;
+      if (!evt || !gameId) return;
+      if (evt.game_id !== gameId) return;
+      if (!seenBingos.has(evt.player_id)) {
+        seenBingos.add(evt.player_id);
+        showBingoOverlay(evt.player_name);
+        renderScoreboard();
+      }
+    })
+
+    .on('postgres_changes', {
+      event: 'UPDATE', schema: 'public', table: 'games'
+    }, async payload => {
+      const updated = payload.new;
+      if (!updated || updated.group_id !== groupId) return;
+
+      // If the lobby is visible, refresh the game status card
+      if (document.getElementById('screen-lobby').classList.contains('show')) {
+        renderLobbyGame(updated.status !== 'finished' ? updated : null);
+        return;
+      }
+
+      if (updated.status === 'active' && updated.id !== gameId) {
+        dismissOverlay();
+        showWaiting();
+        setTimeout(async () => { await enterGame(updated); }, 800);
+      } else if (updated.status !== 'active' && updated.id === gameId) {
+        showWaiting();
+        gameId = null;
+      }
+    })
+
+    .subscribe();
+}
+
+// ================================================================
+// MANUAL REFRESH — re-pulls all marks from DB
+// ================================================================
+async function manualRefresh() {
+  if (!gameId) return;
+  const btn = document.getElementById('sb-refresh-btn');
+  if (btn) { btn.classList.add('spinning'); btn.disabled = true; }
+
+  const { data: markData } = await db.from('marks').select('*').eq('game_id', gameId);
+  allPlayers.forEach(p => { allMarks[p.id] = new Set(); });
+  (markData || []).forEach(m => {
+    if (allMarks[m.player_id]) allMarks[m.player_id].add(m.position);
+  });
+  myMarks = allMarks[playerId] || new Set();
+
+  updateWinHighlights();
+  renderScoreboard();
+
+  if (btn) { setTimeout(() => { btn.classList.remove('spinning'); btn.disabled = false; }, 500); }
+}
+
+// ================================================================
+// BINGO OVERLAY
+// ================================================================
+function showBingoOverlay(name) {
+  document.getElementById('overlay-winner').textContent = name;
+  document.getElementById('bingo-overlay').classList.add('show');
+}
+function dismissOverlay() {
+  document.getElementById('bingo-overlay').classList.remove('show');
+}
+
+// ================================================================
+// NAVIGATION
+// ================================================================
+function goBack() {
+  if (channel) { db.removeChannel(channel); channel = null; }
+  window.location.href = 'index.html';
+}
+
+// ================================================================
+// SCREEN HELPERS
+// ================================================================
+function hideLoading()  { document.getElementById('screen-loading').style.display = 'none'; }
+function showWaiting()  {
+  document.getElementById('screen-lobby').classList.remove('show');
+  document.getElementById('screen-waiting').classList.add('show');
+  document.getElementById('screen-game').classList.remove('show');
+}
+function showGame()  {
+  document.getElementById('screen-lobby').classList.remove('show');
+  document.getElementById('screen-waiting').classList.remove('show');
+  document.getElementById('screen-game').classList.add('show');
+}
+function showError(msg) {
+  hideLoading();
+  document.getElementById('error-message').textContent = msg;
+  document.getElementById('screen-error').classList.add('show');
+}
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => {}));
+}
+</script>
+</body>
+</html>
