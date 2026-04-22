@@ -3,29 +3,29 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="theme-color" content="#1a1008">
+<meta name="theme-color" content="#0c1118">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Proofingo">
 <link rel="manifest" href="manifest.json">
-<link rel="apple-touch-icon" href="icons/icon.svg">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
 <title>Admin — Proofingo</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/config.js"></script>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
-  --bg:#1a1008; --bg2:#231b0d; --bg3:#2e2210;
-  --amber:#ffaa00; --amber-dim:#cc7700; --amber-dark:#3a2200;
-  --text:#f0d090; --text-dim:#c09050; --text-muted:#907040;
-  --border:#4a3418; --red:#ff6b6b; --green:#4ecdc4;
+  --bg:#0c1118; --bg2:#131a24; --bg3:#1a2232;
+  --amber:#00cfe8; --amber-dim:#0098b0; --amber-dark:#061525;
+  --text:#eef2f6; --text-dim:#7a8fa8; --text-muted:#7a8fa8;
+  --border:#1e2d40; --red:#ff6b6b; --green:#00cfe8;
   --font:'Courier New',Courier,monospace;
 }
 html,body { min-height:100%; min-height:100dvh; background:var(--bg); color:var(--text); font-family:var(--font); }
 body::before {
   content:''; position:fixed; inset:0;
-  background-image:linear-gradient(rgba(255,170,0,0.04) 1px,transparent 1px),
-    linear-gradient(90deg,rgba(255,170,0,0.04) 1px,transparent 1px);
+  background-image:linear-gradient(rgba(255,255,255,0.045) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(255,255,255,0.045) 1px,transparent 1px);
   background-size:40px 40px; pointer-events:none; z-index:0;
 }
 .page { position:relative; z-index:1; max-width:600px; margin:0 auto; padding:calc(20px + env(safe-area-inset-top)) 16px calc(80px + env(safe-area-inset-bottom)); }
@@ -56,7 +56,7 @@ input::placeholder, textarea::placeholder { color:var(--text-muted); opacity:1; 
 .btn { display:inline-flex; align-items:center; justify-content:center; gap:6px; padding:14px 20px; min-height:48px; font-family:var(--font); font-size:11px; font-weight:700; letter-spacing:3px; text-transform:uppercase; cursor:pointer; border-radius:4px; transition:all .15s; touch-action:manipulation; white-space:nowrap; -webkit-tap-highlight-color:transparent; }
 .btn-full { width:100%; }
 .btn-amber { background:var(--amber); color:var(--bg); border:2px solid var(--amber); }
-.btn-amber:hover:not(:disabled) { background:#ffcc44; }
+.btn-amber:hover:not(:disabled) { background:#33dff0; }
 .btn-amber:disabled { opacity:.35; cursor:not-allowed; }
 .btn-outline { background:transparent; color:var(--amber); border:2px solid var(--border); }
 .btn-outline:hover:not(:disabled) { border-color:var(--amber); }
@@ -66,26 +66,39 @@ input::placeholder, textarea::placeholder { color:var(--text-muted); opacity:1; 
 .btn-sm { padding:7px 12px; font-size:10px; letter-spacing:2px; }
 .btn-green { background:transparent; color:var(--green); border:2px solid var(--border); }
 .btn-green:hover { border-color:var(--green); }
+.btn-override { background:transparent; color:#f5c400; border:2px solid var(--border); }
+.btn-override:hover { border-color:#f5c400; }
+
+/* Confirmation modal */
+#confirm-modal { display:none; position:fixed; inset:0; z-index:200; align-items:center; justify-content:center; padding:24px; }
+#confirm-modal.show { display:flex; }
+#confirm-modal-backdrop { position:absolute; inset:0; background:rgba(8,14,22,0.88); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); }
+.confirm-box { position:relative; z-index:1; background:var(--bg2); border:2px solid var(--border); border-radius:8px; padding:28px 24px 22px; max-width:360px; width:100%; box-shadow:0 16px 48px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,255,255,0.05); }
+.confirm-icon { font-size:36px; text-align:center; margin-bottom:14px; }
+.confirm-title { font-size:15px; font-weight:900; color:#f5c400; letter-spacing:-0.5px; margin-bottom:10px; text-align:center; }
+.confirm-body { font-size:12px; color:var(--text-muted); letter-spacing:.5px; line-height:1.7; text-align:center; margin-bottom:22px; }
+.confirm-actions { display:flex; gap:10px; }
+.confirm-actions .btn { flex:1; }
 
 /* Alert */
 .alert { padding:11px 13px; border-radius:4px; font-size:11px; letter-spacing:1px; margin-bottom:16px; display:none; }
 .alert.show { display:block; }
-.alert-error { background:rgba(255,80,80,0.08); border:1px solid #ff5050; color:#ff8080; }
-.alert-success { background:rgba(255,170,0,0.08); border:1px solid var(--amber-dim); color:var(--amber); }
+.alert-error { background:rgba(255,80,80,0.12); border:1px solid #ff5050; color:#ff8080; }
+.alert-success { background:rgba(0,207,232,0.08); border:1px solid var(--amber-dim); color:var(--amber); }
 
 /* Spinner */
-.spinner { display:inline-block; width:13px; height:13px; border:2px solid rgba(255,170,0,0.2); border-top-color:var(--amber); border-radius:50%; animation:spin .6s linear infinite; flex-shrink:0; }
+.spinner { display:inline-block; width:13px; height:13px; border:2px solid rgba(0,207,232,0.2); border-top-color:var(--amber); border-radius:50%; animation:spin .6s linear infinite; flex-shrink:0; }
 @keyframes spin { to { transform:rotate(360deg); } }
 
 /* Player rows */
-.player-setup-row { display:flex; align-items:center; gap:10px; background:var(--bg2); border:2px solid var(--border); border-radius:4px; padding:10px 12px; margin-bottom:8px; }
+.player-setup-row { display:flex; align-items:center; gap:10px; background:var(--bg2); border:2px solid var(--border); border-radius:4px; padding:10px 12px; margin-bottom:8px; box-shadow:0 2px 8px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.03); }
 .player-setup-row .dot { width:13px; height:13px; border-radius:50%; flex-shrink:0; }
 .player-setup-row .slot { font-size:10px; color:var(--text-muted); letter-spacing:1px; flex-shrink:0; }
 .player-setup-row input { flex:1; background:transparent; border:none; border-bottom:1px solid var(--border); color:var(--text); font-family:var(--font); font-size:13px; outline:none; padding:2px 0; }
 .player-setup-row input:focus { border-bottom-color:var(--amber-dim); }
 
 /* Invite card */
-.invite-card { background:var(--bg2); border:2px solid var(--border); border-radius:5px; padding:14px 16px; margin-bottom:10px; }
+.invite-card { background:var(--bg2); border:2px solid var(--border); border-radius:5px; padding:14px 16px; margin-bottom:10px; box-shadow:0 4px 16px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.04); }
 .invite-card-top { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
 .invite-card-top .dot { width:13px; height:13px; border-radius:50%; flex-shrink:0; }
 .invite-card-top .name { font-size:15px; font-weight:700; color:var(--text); }
@@ -93,25 +106,25 @@ input::placeholder, textarea::placeholder { color:var(--text-muted); opacity:1; 
 .invite-actions { display:flex; gap:6px; flex-wrap:wrap; }
 
 /* Group ID box */
-.group-id-box { background:var(--amber-dark); border:2px solid var(--amber-dim); border-radius:5px; padding:14px 16px; margin-bottom:20px; }
+.group-id-box { background:var(--amber-dark); border:2px solid var(--amber-dim); border-radius:5px; padding:14px 16px; margin-bottom:20px; box-shadow:0 4px 18px rgba(0,0,0,0.45), 0 0 12px rgba(0,152,176,0.12), inset 0 1px 0 rgba(0,207,232,0.08); }
 .group-id-label { font-size:9px; letter-spacing:3px; color:var(--text-dim); text-transform:uppercase; margin-bottom:6px; }
 .group-id-value { font-size:12px; color:var(--amber); word-break:break-all; letter-spacing:1px; margin-bottom:8px; }
 .group-id-hint { font-size:10px; color:var(--text-muted); letter-spacing:1px; }
 
 /* Games list */
-.game-card { background:var(--bg2); border:2px solid var(--border); border-radius:5px; padding:14px 16px; margin-bottom:10px; }
-.game-card.active-game { border-color:var(--amber); box-shadow:0 0 12px rgba(255,160,0,0.2); }
+.game-card { background:var(--bg2); border:2px solid var(--border); border-radius:5px; padding:14px 16px; margin-bottom:10px; box-shadow:0 4px 16px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.04); transition:box-shadow .2s, border-color .2s; }
+.game-card.active-game { border-color:var(--amber); box-shadow:0 4px 20px rgba(0,0,0,0.45), 0 0 16px rgba(0,207,232,0.22), inset 0 1px 0 rgba(255,255,255,0.06); }
 .game-card-top { display:flex; align-items:center; gap:10px; margin-bottom:10px; flex-wrap:wrap; }
 .game-name { font-size:15px; font-weight:700; color:var(--text); flex:1; }
 .badge { font-size:9px; letter-spacing:2px; padding:3px 8px; border-radius:2px; font-weight:900; text-transform:uppercase; }
 .badge-active { background:var(--amber); color:var(--bg); }
-.badge-setup { background:var(--bg3); color:var(--text-muted); border:1px solid var(--border); }
-.badge-finished { background:rgba(76,205,196,0.15); color:var(--green); border:1px solid rgba(76,205,196,0.3); }
+.badge-setup { background:rgba(0,180,210,0.15); color:#5ad4e8; border:1px solid rgba(0,180,210,0.40); }
+.badge-finished { background:rgba(74,94,114,0.15); color:#4a5e72; border:1px solid rgba(74,94,114,0.35); }
 .game-card-actions { display:flex; gap:6px; flex-wrap:wrap; }
 .game-meta { font-size:10px; color:var(--text-muted); letter-spacing:1px; margin-bottom:8px; }
 
 /* Game editor */
-.sq-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:5px; margin-bottom:20px; }
+.sq-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:5px; margin-bottom:20px; }
 .sq-wrap { position:relative; }
 .sq-pos { position:absolute; top:3px; left:4px; font-size:8px; color:var(--text-muted); pointer-events:none; z-index:1; }
 .sq-ta {
@@ -128,12 +141,12 @@ input::placeholder, textarea::placeholder { color:var(--text-muted); opacity:1; 
 .view.active { display:block; }
 
 /* Play banner player buttons */
-.play-btn { display:inline-flex; align-items:center; gap:8px; padding:10px 16px; background:var(--bg2); border:2px solid var(--border); border-radius:5px; color:var(--text); font-family:var(--font); font-size:13px; font-weight:700; cursor:pointer; text-decoration:none; transition:border-color .15s; touch-action:manipulation; -webkit-tap-highlight-color:transparent; }
-.play-btn:hover { border-color:var(--amber); }
+.play-btn { display:inline-flex; align-items:center; gap:8px; padding:10px 16px; background:var(--bg2); border:2px solid var(--border); border-radius:5px; color:var(--text); font-family:var(--font); font-size:13px; font-weight:700; cursor:pointer; text-decoration:none; transition:border-color .15s, box-shadow .15s, transform .15s; touch-action:manipulation; -webkit-tap-highlight-color:transparent; box-shadow:0 4px 14px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.04); }
+.play-btn:hover { border-color:var(--amber); box-shadow:0 6px 20px rgba(0,0,0,0.5), 0 0 10px rgba(0,207,232,0.15), inset 0 1px 0 rgba(255,255,255,0.06); transform:translateY(-2px); }
 .play-btn .dot { width:11px; height:11px; border-radius:50%; flex-shrink:0; }
 
 /* Scoreboard preview */
-.sb-row { display:flex; align-items:center; gap:10px; padding:10px 12px; margin-bottom:6px; background:var(--bg2); border:2px solid var(--border); border-radius:4px; }
+.sb-row { display:flex; align-items:center; gap:10px; padding:10px 12px; margin-bottom:6px; background:var(--bg2); border:2px solid var(--border); border-radius:4px; box-shadow:0 2px 8px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.03); }
 .sb-dot { width:11px; height:11px; border-radius:50%; flex-shrink:0; }
 .sb-name { font-size:13px; font-weight:700; color:var(--text); flex:1; }
 .sb-bar-bg { flex:2; background:var(--border); border-radius:2px; height:6px; overflow:hidden; }
@@ -141,6 +154,8 @@ input::placeholder, textarea::placeholder { color:var(--text-muted); opacity:1; 
 .sb-bar-fill.bingo { background:var(--amber); }
 .sb-count { font-size:10px; color:var(--text-muted); letter-spacing:1px; min-width:60px; text-align:right; }
 .sb-bingo { font-size:10px; letter-spacing:1px; color:var(--bg); background:var(--amber); padding:3px 7px; border-radius:2px; font-weight:900; white-space:nowrap; }
+.sb-first-line { font-size:10px; letter-spacing:1px; color:var(--bg); background:#7a8fa8; padding:3px 7px; border-radius:2px; font-weight:900; white-space:nowrap; }
+.sb-first-diag { font-size:10px; letter-spacing:1px; color:var(--bg); background:#5ad4e8; padding:3px 7px; border-radius:2px; font-weight:900; white-space:nowrap; }
 </style>
 </head>
 <body>
@@ -168,9 +183,9 @@ input::placeholder, textarea::placeholder { color:var(--text-muted); opacity:1; 
       <input type="text" id="admin-name" placeholder="e.g. Derek" maxlength="30">
     </div>
 
-    <div class="section-label" style="margin-top:24px">Add Players (up to 5)</div>
+    <div class="section-label" style="margin-top:24px">Add Other Players (up to 4)</div>
     <div id="player-setup-rows"></div>
-    <div style="font-size:10px;color:var(--text-muted);letter-spacing:1px;margin-bottom:20px">You can be one of the players. Add at least 1.</div>
+    <div style="font-size:10px;color:var(--text-muted);letter-spacing:1px;margin-bottom:20px">You're already in as player 1. Add at least 1 other player.</div>
 
     <button class="btn btn-amber btn-full" id="btn-create-group" onclick="createGroup()">Create Group &amp; Get Invite Links →</button>
   </div>
@@ -233,7 +248,7 @@ input::placeholder, textarea::placeholder { color:var(--text-muted); opacity:1; 
       <label>Game Name</label>
       <input type="text" id="game-name-input" placeholder="e.g. Round 1 — Change Mgmt" maxlength="60">
     </div>
-    <div style="font-size:10px;color:var(--text-muted);letter-spacing:1px;margin-bottom:12px">Fill all 20 squares.</div>
+    <div style="font-size:10px;color:var(--text-muted);letter-spacing:1px;margin-bottom:12px">Fill all 9 squares.</div>
     <div class="sq-grid" id="editor-grid"></div>
     <div style="display:flex;gap:10px;flex-wrap:wrap">
       <button class="btn btn-amber btn-full" id="btn-save-activate" onclick="saveGame(true)">Save &amp; Activate 🎯</button>
@@ -242,6 +257,20 @@ input::placeholder, textarea::placeholder { color:var(--text-muted); opacity:1; 
     </div>
   </div>
 
+</div>
+
+<!-- Generic confirmation modal -->
+<div id="confirm-modal">
+  <div id="confirm-modal-backdrop" onclick="closeConfirmModal()"></div>
+  <div class="confirm-box" id="confirm-box">
+    <div class="confirm-icon" id="confirm-icon"></div>
+    <div class="confirm-title" id="confirm-title"></div>
+    <div class="confirm-body" id="confirm-body"></div>
+    <div class="confirm-actions">
+      <button class="btn btn-outline btn-sm" onclick="closeConfirmModal()">Cancel</button>
+      <button class="btn btn-sm" id="confirm-action-btn" onclick="runConfirmAction()"></button>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -265,6 +294,9 @@ let allGames     = [];
 let editingGameId = null;
 let allMarks     = {};
 let activeGameId = null;
+let adminFirstStraightId = null;
+let adminFirstDiagId     = null;
+let adminCheckedInIds    = new Set();
 let realtimeChannel = null;
 
 // ----------------------------------------------------------------
@@ -316,13 +348,13 @@ function clearAlert() { document.getElementById('global-alert').className = 'ale
 function buildPlayerSetupRows() {
   const c = document.getElementById('player-setup-rows');
   c.innerHTML = '';
-  for (let i = 0; i < 5; i++) {
+  for (let i = 0; i < 4; i++) {
     const row = document.createElement('div');
     row.className = 'player-setup-row';
     row.innerHTML = `
-      <div class="dot" style="background:${PLAYER_COLORS[i]}"></div>
-      <span class="slot">P${i+1}</span>
-      <input type="text" placeholder="${i===0?'Player 1 (you?)':'Player '+(i+1)}" maxlength="20" data-slot="${i}">
+      <div class="dot" style="background:${PLAYER_COLORS[i+1]}"></div>
+      <span class="slot">P${i+2}</span>
+      <input type="text" placeholder="Player ${i+2}" maxlength="20" data-slot="${i}">
     `;
     c.appendChild(row);
   }
@@ -353,12 +385,29 @@ async function createGroup() {
   adminName = grp.admin_name;
   saveAdminGroup(groupId);
 
+  // Admin is always player 1
+  const adminPlayerRow = { group_id: groupId, name: aName, color: PLAYER_COLORS[0], claimed: true };
+
+  // Additional players from input slots use colors starting at index 1
   const filledSlots = [...playerInputs]
-    .map((inp, i) => ({ name: inp.value.trim(), color: PLAYER_COLORS[i] }))
+    .map((inp, i) => ({ name: inp.value.trim(), color: PLAYER_COLORS[i + 1] }))
     .filter(p => p.name);
 
-  const { error: pe } = await db.from('players').insert(filledSlots.map(p => ({ group_id: groupId, name: p.name, color: p.color })));
+  const allPlayerRows = [adminPlayerRow, ...filledSlots.map(p => ({ group_id: groupId, name: p.name, color: p.color }))];
+  const { data: insertedPlayers, error: pe } = await db.from('players').insert(allPlayerRows).select();
   if (pe) { showAlert('Error saving players: ' + pe.message); btn.innerHTML = 'Create Group & Get Invite Links →'; btn.disabled = false; return; }
+
+  // Store admin's player session in localStorage so they can access their own board
+  const adminPlayer = (insertedPlayers || []).find(p => p.name === aName && p.color === PLAYER_COLORS[0]);
+  if (adminPlayer) {
+    localStorage.setItem(`bingo_session_${adminPlayer.id}`, JSON.stringify({
+      playerId: adminPlayer.id, playerName: adminPlayer.name,
+      playerColor: adminPlayer.color, groupId
+    }));
+    const idx = JSON.parse(localStorage.getItem('bingo_session_index') || '[]');
+    if (!idx.includes(adminPlayer.id)) idx.push(adminPlayer.id);
+    localStorage.setItem('bingo_session_index', JSON.stringify(idx));
+  }
 
   btn.innerHTML = 'Create Group & Get Invite Links →';
   btn.disabled = false;
@@ -488,7 +537,8 @@ function renderGamesList() {
         <button class="btn btn-sm btn-outline" onclick="showGameEditor('${g.id}')">✏️ Edit</button>
         ${g.status !== 'active'
           ? `<button class="btn btn-sm btn-green" onclick="activateGame('${g.id}')">▶ Activate</button>`
-          : `<button class="btn btn-sm btn-danger" onclick="finishGame('${g.id}')">■  End Game</button>`
+          : `<button class="btn btn-sm btn-danger" onclick="finishGame('${g.id}')">■  End Game</button>
+             <button class="btn btn-sm btn-override" id="override-game-btn" onclick="showOverrideConfirm()" style="display:none">⚡ Override Check-in</button>`
         }
       </div>
     `;
@@ -504,10 +554,19 @@ async function activateGame(gid) {
   showAlert('Game is now live — players will switch automatically!', 'success');
 }
 
-async function finishGame(gid) {
-  if (!confirm('End this game? Players will see a waiting screen.')) return;
-  await db.from('games').update({ status:'finished' }).eq('id', gid);
-  await loadGroup();
+function finishGame(gid) {
+  showConfirm({
+    icon: '■',
+    title: 'End This Game?',
+    body: 'Players will immediately see a "waiting" screen and will no longer be able to mark squares. Current scores are saved. You can start a new game at any time.',
+    confirmText: 'End Game',
+    confirmClass: 'btn-danger',
+    borderColor: 'var(--red)',
+    onConfirm: async () => {
+      await db.from('games').update({ status: 'finished' }).eq('id', gid);
+      await loadGroup();
+    }
+  });
 }
 
 // ================================================================
@@ -541,7 +600,7 @@ async function showGameEditor(gid) {
 function buildEditorGrid() {
   const grid = document.getElementById('editor-grid');
   grid.innerHTML = '';
-  for (let pos = 0; pos < 20; pos++) {
+  for (let pos = 0; pos < 9; pos++) {
     const wrap = document.createElement('div');
     wrap.className = 'sq-wrap';
     const num  = document.createElement('span');
@@ -621,19 +680,23 @@ async function loadActiveGameScores() {
   section.style.display = 'block';
   document.getElementById('sb-game-name').textContent = activeGame.name;
 
-  // Populate play-your-board buttons
-  banner.style.display = 'block';
+  // Populate play-your-board buttons — only show this device's own player
+  const mySessionIds = new Set(JSON.parse(localStorage.getItem('bingo_session_index') || '[]'));
+  const myPlayers = allPlayers.filter(p => mySessionIds.has(p.id));
   const btnContainer = document.getElementById('play-player-btns');
   btnContainer.innerHTML = '';
-  allPlayers.forEach(p => {
-    const a = document.createElement('a');
-    a.href = playerInviteUrl(p.id);
-    a.target = '_blank';
-    a.rel = 'noopener';
-    a.className = 'play-btn';
-    a.innerHTML = `<span class="dot" style="background:${p.color}"></span>${p.name}`;
-    btnContainer.appendChild(a);
-  });
+  if (myPlayers.length === 0) {
+    banner.style.display = 'none';
+  } else {
+    banner.style.display = 'block';
+    myPlayers.forEach(p => {
+      const a = document.createElement('a');
+      a.href = playerInviteUrl(p.id);
+      a.className = 'play-btn';
+      a.innerHTML = `<span class="dot" style="background:${p.color}"></span>${p.name}`;
+      btnContainer.appendChild(a);
+    });
+  }
 
   const { data: markData } = await db.from('marks').select('*').eq('game_id', activeGameId);
   allMarks = {};
@@ -642,7 +705,25 @@ async function loadActiveGameScores() {
     if (allMarks[m.player_id]) allMarks[m.player_id].add(m.position);
   });
 
+  adminFirstStraightId = null;
+  adminFirstDiagId     = null;
+  const { data: fleRows } = await db.from('first_line_events')
+    .select('player_id, line_type, created_at')
+    .eq('game_id', activeGameId)
+    .order('created_at', { ascending: true });
+  for (const row of (fleRows || [])) {
+    if (row.line_type === 'straight' && !adminFirstStraightId) adminFirstStraightId = row.player_id;
+    if (row.line_type === 'diagonal' && !adminFirstDiagId) adminFirstDiagId = row.player_id;
+  }
+
+  adminCheckedInIds = new Set();
+  const { data: ciRows } = await db.from('check_ins').select('player_id').eq('game_id', activeGameId);
+  (ciRows || []).forEach(r => adminCheckedInIds.add(r.player_id));
+
   renderAdminScoreboard();
+  const allCheckedIn = allPlayers.length > 0 && allPlayers.every(p => adminCheckedInIds.has(p.id));
+  const overrideBtn = document.getElementById('override-game-btn');
+  if (overrideBtn) overrideBtn.style.display = allCheckedIn ? 'none' : '';
 }
 
 function renderAdminScoreboard() {
@@ -655,20 +736,80 @@ function renderAdminScoreboard() {
     return (allMarks[b.id]||new Set()).size - (allMarks[a.id]||new Set()).size;
   });
   sorted.forEach(p => {
-    const marks  = allMarks[p.id] || new Set();
-    const count  = marks.size;
-    const bingo  = hasBingo(marks);
-    const pct    = Math.round(count / 20 * 100);
-    const row    = document.createElement('div');
+    const marks      = allMarks[p.id] || new Set();
+    const count      = marks.size;
+    const bingo      = hasBingo(marks);
+    const pct        = Math.round(count / 9 * 100);
+    const firstLine  = !bingo && p.id === adminFirstStraightId;
+    const firstDiag  = !bingo && !firstLine && p.id === adminFirstDiagId;
+
+    const rightBadge = bingo
+      ? '<div class="sb-bingo">PROOFINGO 🎯</div>'
+      : firstLine
+        ? '<div class="sb-first-line">1ST LINE 🏁</div>'
+        : firstDiag
+          ? '<div class="sb-first-diag">1ST DIAG ⚡</div>'
+          : `<div class="sb-count">${count}/9</div>`;
+
+    const row = document.createElement('div');
     row.className = 'sb-row';
     row.innerHTML = `
       <div class="sb-dot" style="background:${p.color}"></div>
       <div class="sb-name">${p.name}</div>
       <div class="sb-bar-bg"><div class="sb-bar-fill${bingo?' bingo':''}" style="width:${pct}%"></div></div>
-      <div class="sb-count">${count}/20</div>
-      ${bingo ? '<div class="sb-bingo">PROOFINGO 🎯</div>' : ''}
+      ${rightBadge}
     `;
     c.appendChild(row);
+  });
+}
+
+// ================================================================
+// GENERIC CONFIRM MODAL
+// ================================================================
+let _pendingConfirm = null;
+
+function showConfirm({ icon, title, body, confirmText, confirmClass, borderColor, onConfirm }) {
+  _pendingConfirm = onConfirm;
+  document.getElementById('confirm-icon').textContent  = icon || '⚠️';
+  document.getElementById('confirm-title').textContent = title;
+  document.getElementById('confirm-body').textContent  = body;
+  const btn = document.getElementById('confirm-action-btn');
+  btn.textContent = confirmText;
+  btn.className   = `btn btn-sm ${confirmClass || 'btn-danger'}`;
+  btn.disabled    = false;
+  document.getElementById('confirm-box').style.borderColor = borderColor || '';
+  document.getElementById('confirm-modal').classList.add('show');
+}
+
+function closeConfirmModal() {
+  document.getElementById('confirm-modal').classList.remove('show');
+  _pendingConfirm = null;
+}
+
+async function runConfirmAction() {
+  if (!_pendingConfirm) return;
+  const btn = document.getElementById('confirm-action-btn');
+  if (btn) btn.disabled = true;
+  await _pendingConfirm();
+  closeConfirmModal();
+}
+
+function showOverrideConfirm() {
+  showConfirm({
+    icon: '⚡',
+    title: 'Override Check-In?',
+    body: 'This will mark all players as checked in and allow everyone to enter the game — even if they haven\'t tapped "I\'m Ready" yet. Use this if a player is having trouble checking in.',
+    confirmText: 'Override & Start',
+    confirmClass: 'btn-override',
+    borderColor: '#f5c400',
+    onConfirm: async () => {
+      if (!activeGameId) return;
+      const rows = allPlayers.map(p => ({ game_id: activeGameId, player_id: p.id }));
+      await db.from('check_ins').upsert(rows, { onConflict: 'game_id,player_id' });
+      allPlayers.forEach(p => adminCheckedInIds.add(p.id));
+      const overrideBtn = document.getElementById('override-game-btn');
+      if (overrideBtn) overrideBtn.style.display = 'none';
+    }
   });
 }
 
@@ -693,6 +834,16 @@ function subscribeRealtime() {
       renderAdminScoreboard();
     })
     .on('postgres_changes', {
+      event: 'INSERT', schema: 'public', table: 'check_ins'
+    }, payload => {
+      const ci = payload.new;
+      if (!ci || !activeGameId) return;
+      adminCheckedInIds.add(ci.player_id);
+      const allCheckedIn = allPlayers.length > 0 && allPlayers.every(p => adminCheckedInIds.has(p.id));
+      const overrideBtn = document.getElementById('override-game-btn');
+      if (overrideBtn) overrideBtn.style.display = allCheckedIn ? 'none' : '';
+    })
+    .on('postgres_changes', {
       event: 'UPDATE', schema: 'public', table: 'games',
       filter: `group_id=eq.${groupId}`
     }, async () => {
@@ -708,24 +859,23 @@ function showDashboard() {
   switchView('dashboard');
 }
 
-async function endGroup() {
-  const confirmed = confirm(
-    `Permanently end "${groupName}"?\n\n` +
-    `This will delete all games, scores, and player invite links. ` +
-    `Anyone who clicks an old invite link will see "group has ended".\n\n` +
-    `This cannot be undone.`
-  );
-  if (!confirmed) return;
-
-  const { error } = await db.from('groups').delete().eq('id', groupId);
-  if (error) { showAlert('Error ending group: ' + error.message); return; }
-
-  // Remove from local admin index
-  const index = JSON.parse(localStorage.getItem('bingo_admin_index') || '[]');
-  localStorage.setItem('bingo_admin_index', JSON.stringify(index.filter(id => id !== groupId)));
-  if (localStorage.getItem('bingo_admin_gid') === groupId) localStorage.removeItem('bingo_admin_gid');
-
-  window.location.href = 'index.html';
+function endGroup() {
+  showConfirm({
+    icon: '⊗',
+    title: `End "${groupName}"?`,
+    body: 'This permanently deletes all games, scores, and player invite links. Anyone who taps an old invite link will see "group has ended". This cannot be undone.',
+    confirmText: 'End Group',
+    confirmClass: 'btn-danger',
+    borderColor: 'var(--red)',
+    onConfirm: async () => {
+      const { error } = await db.from('groups').delete().eq('id', groupId);
+      if (error) { closeConfirmModal(); showAlert('Error ending group: ' + error.message); return; }
+      const index = JSON.parse(localStorage.getItem('bingo_admin_index') || '[]');
+      localStorage.setItem('bingo_admin_index', JSON.stringify(index.filter(id => id !== groupId)));
+      if (localStorage.getItem('bingo_admin_gid') === groupId) localStorage.removeItem('bingo_admin_gid');
+      window.location.href = 'index.html';
+    }
+  });
 }
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => {}));

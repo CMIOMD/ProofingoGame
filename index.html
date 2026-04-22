@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="theme-color" content="#1a1008">
+<meta name="theme-color" content="#0c1118">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Proofingo">
 <link rel="manifest" href="manifest.json">
-<link rel="apple-touch-icon" href="icons/icon.svg">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
 <title>Proofingo</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="js/config.js"></script>
@@ -16,40 +16,47 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 body {
   min-height: 100vh; min-height: 100dvh;
-  background: #1a1008; font-family: 'Courier New', Courier, monospace;
+  background: #0c1118; font-family: 'Courier New', Courier, monospace;
   display: flex; align-items: center; justify-content: center;
   padding: calc(24px + env(safe-area-inset-top)) 16px calc(24px + env(safe-area-inset-bottom));
 }
 body::before {
   content: ''; position: fixed; inset: 0;
-  background-image: linear-gradient(rgba(255,170,0,0.04) 1px,transparent 1px),
-    linear-gradient(90deg,rgba(255,170,0,0.04) 1px,transparent 1px);
+  background-image: linear-gradient(rgba(255,255,255,0.045) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(255,255,255,0.045) 1px,transparent 1px);
   background-size: 40px 40px; pointer-events: none;
 }
 .card { position: relative; width: min(92vw, 480px); text-align: center; }
-.eyebrow { font-size: 10px; letter-spacing: 5px; color: #7a6040; text-transform: uppercase; margin-bottom: 8px; }
-h1 { font-size: clamp(44px,12vw,80px); font-weight: 900; color: #ffaa00; letter-spacing: -2px; line-height: 1; text-shadow: 0 0 60px rgba(255,160,0,0.35); margin-bottom: 8px; white-space: nowrap; }
-.tagline { font-size: 11px; color: #8a6030; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 48px; }
+.eyebrow { font-size: 10px; letter-spacing: 5px; color: #7a8fa8; text-transform: uppercase; margin-bottom: 8px; }
+.logo-wrap { display:flex; justify-content:center; margin-bottom:12px; }
+.logo-wrap img { width: min(300px, 78vw); height: auto; }
+.tagline { font-size: 11px; color: #7a8fa8; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 48px; }
 .btn { display: block; width: 100%; padding: 18px 16px; min-height: 52px; font-family: 'Courier New', Courier, monospace; font-size: 12px; font-weight: 700; letter-spacing: 4px; text-transform: uppercase; text-decoration: none; cursor: pointer; border-radius: 4px; transition: all 0.15s ease; touch-action: manipulation; margin-bottom: 10px; -webkit-tap-highlight-color: transparent; }
-.btn-primary { background: #ffaa00; color: #1a1008; border: 2px solid #ffaa00; }
-.btn-primary:hover { background: #ffcc44; }
-.btn-secondary { background: transparent; color: #ffaa00; border: 2px solid #3a2800; }
-.btn-secondary:hover { border-color: #ffaa00; }
-.admin-resume { background: #231b0d; border: 2px solid #4a3418; border-radius: 4px; padding: 14px 16px; margin-bottom: 10px; display: flex; align-items: center; gap: 12px; cursor: pointer; text-decoration: none; transition: border-color .15s; -webkit-tap-highlight-color: transparent; }
-.admin-resume:hover { border-color: #cc7700; }
-.admin-resume-label { font-size: 9px; letter-spacing: 3px; color: #907040; text-transform: uppercase; margin-bottom: 3px; }
-.admin-resume-name { font-size: 14px; font-weight: 700; color: #f0d090; letter-spacing: 0; }
-.admin-resume-icon { font-size: 18px; margin-left: auto; color: #cc7700; }
-.section-divider { font-size: 10px; color: #c09050; letter-spacing: 3px; margin: 16px 0; }
-.divider { font-size: 10px; color: #c09050; letter-spacing: 3px; margin: 16px 0; }
+.btn-primary { background: #00cfe8; color: #0c1118; border: 2px solid #00cfe8; box-shadow: 0 4px 16px rgba(0,207,232,0.25), 0 2px 8px rgba(0,0,0,0.4); }
+.btn-primary:hover { background: #33dff0; box-shadow: 0 6px 22px rgba(0,207,232,0.35), 0 2px 8px rgba(0,0,0,0.4); transform: translateY(-1px); }
+.btn-secondary { background: transparent; color: #00cfe8; border: 2px solid #1e2d40; box-shadow: 0 2px 8px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.03); }
+.btn-secondary:hover { border-color: #00cfe8; box-shadow: 0 4px 14px rgba(0,0,0,0.45), 0 0 8px rgba(0,207,232,0.1), inset 0 1px 0 rgba(255,255,255,0.04); transform: translateY(-1px); }
+.admin-resume { background: #131a24; border: 2px solid #1e2d40; border-radius: 4px; padding: 14px 16px; margin-bottom: 10px; display: flex; align-items: center; gap: 12px; cursor: pointer; text-decoration: none; transition: border-color .15s, box-shadow .15s, transform .15s; -webkit-tap-highlight-color: transparent; box-shadow: 0 4px 16px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.04); }
+.admin-resume:hover { border-color: #0098b0; box-shadow: 0 6px 22px rgba(0,0,0,0.5), 0 0 10px rgba(0,152,176,0.15), inset 0 1px 0 rgba(255,255,255,0.05); transform: translateY(-2px); }
+.admin-resume-label { font-size: 9px; letter-spacing: 3px; color: #7a8fa8; text-transform: uppercase; margin-bottom: 3px; }
+.admin-resume-name { font-size: 14px; font-weight: 700; color: #eef2f6; letter-spacing: 0; }
+.admin-resume-icon { font-size: 18px; margin-left: auto; color: #0098b0; }
+.section-divider { font-size: 10px; color: #7a8fa8; letter-spacing: 3px; margin: 16px 0; }
+.divider { font-size: 10px; color: #7a8fa8; letter-spacing: 3px; margin: 16px 0; }
 .resume-wrap { display: flex; gap: 8px; }
-.resume-input { flex: 1; padding: 12px; background: #231b0d; border: 2px solid #4a3418; border-radius: 4px; color: #f0d090; font-family: 'Courier New', Courier, monospace; font-size: 12px; outline: none; }
-.resume-input:focus { border-color: #cc7700; }
-.resume-input::placeholder { color: #907040; opacity: 1; }
-.resume-btn { padding: 12px 16px; background: transparent; border: 2px solid #3a2800; border-radius: 4px; color: #ffaa00; font-family: 'Courier New', Courier, monospace; font-size: 11px; font-weight: 700; cursor: pointer; letter-spacing: 2px; white-space: nowrap; touch-action: manipulation; }
-.resume-btn:hover { border-color: #ffaa00; }
-.footer { margin-top: 40px; font-size: 12px; color: #4ecdc4; letter-spacing: 1px; }
-.footer .cup { font-size: 22px; vertical-align: middle; line-height: 1; }
+.resume-input { flex: 1; padding: 12px; background: #131a24; border: 2px solid #1e2d40; border-radius: 4px; color: #eef2f6; font-family: 'Courier New', Courier, monospace; font-size: 12px; outline: none; }
+.resume-input:focus { border-color: #0098b0; }
+.resume-input::placeholder { color: #7a8fa8; opacity: 1; }
+.resume-btn { padding: 12px 16px; background: transparent; border: 2px solid #1e2d40; border-radius: 4px; color: #00cfe8; font-family: 'Courier New', Courier, monospace; font-size: 11px; font-weight: 700; cursor: pointer; letter-spacing: 2px; white-space: nowrap; touch-action: manipulation; }
+.resume-btn:hover { border-color: #00cfe8; }
+.footer { margin-top: 40px; font-size: 13px; color: #eef2f6; letter-spacing: 1px; text-align: center; line-height: 2.2; }
+.footer strong { color: #eef2f6; }
+.footer-cup { font-size: 32px; vertical-align: middle; line-height: 1; }
+.footer-stethoscope { font-size: 32px; cursor: pointer; display: inline-block; position: relative; vertical-align: middle; user-select: none; -webkit-tap-highlight-color: transparent; transition: transform .15s; }
+.footer-stethoscope:hover { transform: scale(1.2); }
+.footer-stethoscope .dr-label { display: none; position: absolute; bottom: 130%; left: 50%; transform: translateX(-50%); background: #1a2232; border: 1.5px solid #00cfe8; border-radius: 6px; padding: 4px 10px; font-size: 10px; font-family: 'Courier New', Courier, monospace; color: #00cfe8; white-space: nowrap; letter-spacing: 2px; box-shadow: 0 4px 14px rgba(0,0,0,0.5); pointer-events: none; }
+.footer-stethoscope .dr-label::after { content: ''; position: absolute; top: 100%; left: 50%; transform: translateX(-50%); border: 5px solid transparent; border-top-color: #00cfe8; }
+.footer-stethoscope.revealed .dr-label { display: block; }
 .resume-btn { min-height: 48px; }
 .error { font-size: 11px; color: #ff8080; margin-top: 8px; letter-spacing: 1px; display: none; }
 .error.show { display: block; }
@@ -57,13 +64,15 @@ h1 { font-size: clamp(44px,12vw,80px); font-weight: 900; color: #ffaa00; letter-
 </head>
 <body>
 <div class="card">
-  <h1>PROOFINGO</h1>
+  <div class="logo-wrap">
+    <img src="IMG_7471.png" alt="Proofingo">
+  </div>
   <div class="tagline">Show Your Proof Edition</div>
 
   <!-- Existing admin groups shown here if stored -->
   <div id="admin-groups"></div>
 
-  <a href="admin.html?new=1" class="btn btn-primary" id="btn-create">Create New Group</a>
+  <a href="admin.html?new=1" class="btn btn-primary" id="btn-create">+ Create a Group</a>
 
   <div class="divider">— OR RESUME BY ID —</div>
 
@@ -73,7 +82,10 @@ h1 { font-size: clamp(44px,12vw,80px); font-weight: 900; color: #ffaa00; letter-
   </div>
   <div class="error" id="resume-error"></div>
 
-  <div class="footer"><span class="cup">☕</span> Created by D. Garniss under the influence of <strong>A LOT</strong> of coffee <span class="cup">☕</span></div>
+  <div class="footer">
+    Created under the influence of <strong>A LOT</strong> of <span class="footer-cup">☕</span><br>
+    by a <span class="footer-stethoscope" onclick="this.classList.toggle('revealed')" title="Who made this?">🩺<span class="dr-label">Dr. Garniss</span></span>
+  </div>
 </div>
 <script>
 // Load all groups — admin dashboards + player invite groups
@@ -89,14 +101,13 @@ async function loadAllGroups() {
     localStorage.setItem('bingo_admin_index', JSON.stringify(adminIndex));
   }
   for (const gid of adminIndex) {
-    const { data: grp } = await db.from('groups').select('name').eq('id', gid).single();
+    const { data: grp } = await db.from('groups').select('name, admin_name').eq('id', gid).single();
     if (!grp) {
-      // Group deleted — prune from index
       const pruned = adminIndex.filter(id => id !== gid);
       localStorage.setItem('bingo_admin_index', JSON.stringify(pruned));
       continue;
     }
-    cards.push({ type: 'admin', label: 'Dashboard', name: grp.name, href: `admin.html?gid=${gid}` });
+    cards.push({ type: 'admin', label: 'Admin Dashboard', name: grp.name, adminName: grp.admin_name, href: `admin.html?gid=${gid}` });
   }
 
   // ── Player invite groups ──────────────────────────────────────
@@ -105,43 +116,56 @@ async function loadAllGroups() {
     let session;
     try { session = JSON.parse(localStorage.getItem(`bingo_session_${pid}`)); } catch(e) { continue; }
     if (!session) continue;
-    const { data: grp } = await db.from('groups').select('name').eq('id', session.groupId).single();
+    const { data: grp } = await db.from('groups').select('name, admin_name').eq('id', session.groupId).single();
     if (!grp) {
-      // Group ended — prune stale session
       localStorage.removeItem(`bingo_session_${pid}`);
       const pruned = playerIndex.filter(p => p !== pid);
       localStorage.setItem('bingo_session_index', JSON.stringify(pruned));
       continue;
     }
-    cards.push({ type: 'player', label: `Playing as ${session.playerName}`, name: grp.name, href: `game.html?pid=${pid}`, color: session.playerColor });
+    // Skip if this player is already shown via admin card for same group
+    if (cards.some(c => c.type === 'admin' && c.href.includes(session.groupId))) continue;
+    cards.push({ type: 'player', label: `Playing as ${session.playerName}`, name: grp.name, adminName: grp.admin_name, href: `game.html?pid=${pid}`, color: session.playerColor });
   }
 
   if (cards.length === 0) return;
 
-  container.innerHTML = '<div class="section-divider">— YOUR GROUPS —</div>';
+  const countLabel = cards.length > 1
+    ? `— YOUR GROUPS (${cards.length}) —`
+    : '— YOUR GROUP —';
+  container.innerHTML = `<div class="section-divider">${countLabel}</div>`;
 
   cards.forEach(card => {
     const a = document.createElement('a');
     a.href = card.href;
     a.className = 'admin-resume';
     const dot = card.type === 'player'
-      ? `<span style="width:10px;height:10px;border-radius:50%;background:${card.color};flex-shrink:0;display:inline-block;margin-right:2px"></span>`
-      : '';
+      ? `<span style="width:10px;height:10px;border-radius:50%;background:${card.color};flex-shrink:0;display:inline-block;margin-top:2px"></span>`
+      : `<span style="font-size:14px;flex-shrink:0;margin-top:2px">⚙️</span>`;
+    const ctaText = card.type === 'player' ? 'TAP TO PLAY' : 'MANAGE/PLAY';
     a.innerHTML = `
-      <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0">
+      <div style="display:flex;align-items:flex-start;gap:8px;flex:1;min-width:0">
         ${dot}
-        <div>
-          <div class="admin-resume-label">${card.label}</div>
+        <div style="min-width:0">
           <div class="admin-resume-name">${card.name}</div>
+          <div style="font-size:8px;letter-spacing:.5px;color:#7a8fa8;margin-top:2px">(Created by ${card.adminName})</div>
+          <div class="admin-resume-label" style="margin-top:5px">${card.label}</div>
         </div>
       </div>
-      <span class="admin-resume-icon">→</span>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:3px;flex-shrink:0;padding-left:8px">
+        <span class="admin-resume-icon">→</span>
+        <span style="font-size:10px;letter-spacing:1.5px;color:#f5c400;text-transform:uppercase;white-space:nowrap">${ctaText}</span>
+      </div>
     `;
     container.appendChild(a);
   });
 
+  if (cards.length > 1) {
+    container.insertAdjacentHTML('beforeend', '<div style="font-size:9px;color:#7a8fa8;letter-spacing:2px;text-align:center;margin:4px 0 12px;text-transform:uppercase">↑ Tap any group above to enter ↑</div>');
+  }
+
   container.insertAdjacentHTML('beforeend', '<div class="section-divider">— OR CREATE NEW —</div>');
-  document.getElementById('btn-create').textContent = '+ Create Another Group';
+  document.getElementById('btn-create').textContent = '+ Create a Group';
 }
 
 loadAllGroups();
@@ -188,9 +212,9 @@ if ('serviceWorker' in navigator) {
         width:min(380px,calc(100vw - 24px));
         font-family:'Courier New',Courier,monospace;
         border-radius:14px;
-        background:linear-gradient(160deg,#231b0d 0%,#1a1008 100%);
-        border:1.5px solid #4a3418;
-        box-shadow:0 24px 60px rgba(0,0,0,0.8),inset 0 0 0 1px rgba(255,170,0,0.06);
+        background:linear-gradient(160deg,#131a24 0%,#0c1118 100%);
+        border:1.5px solid #1e2d40;
+        box-shadow:0 24px 60px rgba(0,0,0,0.8),inset 0 0 0 1px rgba(0,207,232,0.10);
       }
       #pi-banner.from-bottom { bottom:14px; animation:piSlideUp   .4s cubic-bezier(.22,1,.36,1) forwards; }
       #pi-banner.from-top    { top:14px;    animation:piSlideDown .4s cubic-bezier(.22,1,.36,1) forwards; }
@@ -198,36 +222,36 @@ if ('serviceWorker' in navigator) {
       #pi-banner.exit-up     { animation:piExitUp   .3s cubic-bezier(.4,0,1,1) forwards !important; }
       .pi-inner { padding:16px 16px 14px; }
       .pi-header { display:flex; align-items:center; gap:12px; margin-bottom:12px; }
-      .pi-icon { width:52px;height:52px;border-radius:12px;background:#2e2210;border:1.5px solid #4a3418;flex-shrink:0;display:flex;align-items:center;justify-content:center;overflow:hidden;padding:6px; }
+      .pi-icon { width:52px;height:52px;border-radius:12px;background:#1a2232;border:1.5px solid #1e2d40;flex-shrink:0;display:flex;align-items:center;justify-content:center;overflow:hidden;padding:6px; }
       .pi-icon img { width:100%;height:100%;object-fit:contain; }
-      .pi-title { font-size:14px;font-weight:700;color:#f0d090;letter-spacing:-.2px;line-height:1.25; }
-      .pi-sub { font-size:10px;color:#907040;letter-spacing:1px;margin-top:3px;text-transform:uppercase; }
-      .pi-close { margin-left:auto;flex-shrink:0;background:rgba(255,170,0,0.07);border:1px solid #4a3418;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#907040;padding:0;touch-action:manipulation; }
-      .pi-close:hover { border-color:#cc7700;color:#ffaa00; }
-      .pi-divider { height:1px;background:#2e2210;margin-bottom:12px; }
-      .pi-browser-tag { display:inline-flex;align-items:center;gap:5px;background:rgba(255,170,0,0.06);border:1px solid #4a3418;border-radius:20px;padding:3px 10px;font-size:10px;color:#907040;letter-spacing:1px;margin-bottom:10px; }
+      .pi-title { font-size:14px;font-weight:700;color:#eef2f6;letter-spacing:-.2px;line-height:1.25; }
+      .pi-sub { font-size:10px;color:#7a8fa8;letter-spacing:1px;margin-top:3px;text-transform:uppercase; }
+      .pi-close { margin-left:auto;flex-shrink:0;background:rgba(0,207,232,0.10);border:1px solid #1e2d40;border-radius:50%;width:26px;height:26px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#7a8fa8;padding:0;touch-action:manipulation; }
+      .pi-close:hover { border-color:#0098b0;color:#00cfe8; }
+      .pi-divider { height:1px;background:#1a2232;margin-bottom:12px; }
+      .pi-browser-tag { display:inline-flex;align-items:center;gap:5px;background:rgba(0,207,232,0.12);border:1px solid #1e2d40;border-radius:20px;padding:3px 10px;font-size:10px;color:#7a8fa8;letter-spacing:1px;margin-bottom:10px; }
       .pi-steps { display:flex;flex-direction:column;gap:0; }
       .pi-step { display:flex;align-items:stretch;gap:10px; }
       .pi-step-spine { display:flex;flex-direction:column;align-items:center;flex-shrink:0; }
-      .pi-step-num { width:20px;height:20px;border-radius:50%;background:rgba(255,170,0,0.15);border:1px solid rgba(255,170,0,0.3);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#cc7700;flex-shrink:0;margin-top:10px; }
-      .pi-step-line { width:1px;flex:1;background:rgba(255,170,0,0.12);margin:3px 0; }
+      .pi-step-num { width:20px;height:20px;border-radius:50%;background:rgba(0,207,232,0.18);border:1px solid rgba(0,207,232,0.40);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#0098b0;flex-shrink:0;margin-top:10px; }
+      .pi-step-line { width:1px;flex:1;background:rgba(0,207,232,0.18);margin:3px 0; }
       .pi-step-body { flex:1;display:flex;align-items:center;gap:10px;padding:8px 0; }
-      .pi-step-ico { width:30px;height:30px;border-radius:7px;background:rgba(255,170,0,0.08);border:1px solid rgba(255,170,0,0.2);flex-shrink:0;display:flex;align-items:center;justify-content:center;color:#cc7700; }
-      .pi-step-text { font-size:12px;line-height:1.5;color:#c09050; }
-      .pi-step-text strong { color:#f0d090; }
-      .pi-note { background:rgba(255,170,0,0.05);border:1px solid rgba(255,170,0,0.15);border-radius:8px;padding:9px 11px;margin-top:11px;display:flex;gap:8px;align-items:flex-start; }
-      .pi-note-text { font-size:10px;color:#907040;line-height:1.6;letter-spacing:.3px; }
-      .pi-dont-show { display:block;width:100%;text-align:center;background:none;border:none;cursor:pointer;font-family:'Courier New',Courier,monospace;font-size:10px;color:#4a3418;letter-spacing:2px;padding:8px 0 2px;touch-action:manipulation; }
-      .pi-dont-show:hover { color:#907040; }
-      .pi-caret { display:block;text-align:center;font-size:20px;color:#cc7700;animation:piCaretPulse 1.2s ease-in-out infinite;line-height:1;padding:0 0 4px; }
+      .pi-step-ico { width:30px;height:30px;border-radius:7px;background:rgba(0,207,232,0.12);border:1px solid rgba(0,207,232,0.30);flex-shrink:0;display:flex;align-items:center;justify-content:center;color:#0098b0; }
+      .pi-step-text { font-size:12px;line-height:1.5;color:#7a8fa8; }
+      .pi-step-text strong { color:#eef2f6; }
+      .pi-note { background:rgba(0,207,232,0.10);border:1px solid rgba(0,207,232,0.25);border-radius:8px;padding:9px 11px;margin-top:11px;display:flex;gap:8px;align-items:flex-start; }
+      .pi-note-text { font-size:10px;color:#7a8fa8;line-height:1.6;letter-spacing:.3px; }
+      .pi-dont-show { display:block;width:100%;text-align:center;background:none;border:none;cursor:pointer;font-family:'Courier New',Courier,monospace;font-size:10px;color:#4a5e72;letter-spacing:2px;padding:8px 0 2px;touch-action:manipulation; }
+      .pi-dont-show:hover { color:#7a8fa8; }
+      .pi-caret { display:block;text-align:center;font-size:20px;color:#0098b0;animation:piCaretPulse 1.2s ease-in-out infinite;line-height:1;padding:0 0 4px; }
       .pi-caret-top { padding:4px 0 0; }
     `;
     document.head.appendChild(s);
   }
 
   function buildShareBadge() {
-    return `<span style="display:inline-flex;align-items:center;vertical-align:middle;background:rgba(255,170,0,0.1);border:1px solid rgba(255,170,0,0.25);border-radius:4px;padding:1px 4px;margin:0 2px;">
-      <svg width="11" height="11" viewBox="0 0 50 62" fill="none"><line x1="25" y1="40" x2="25" y2="4" stroke="#cc7700" stroke-width="5" stroke-linecap="round"/><polyline points="13,16 25,3 37,16" fill="none" stroke="#cc7700" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/><path d="M10 28 L10 54 L40 54 L40 28" fill="none" stroke="#cc7700" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    return `<span style="display:inline-flex;align-items:center;vertical-align:middle;background:rgba(0,207,232,0.14);border:1px solid rgba(0,207,232,0.35);border-radius:4px;padding:1px 4px;margin:0 2px;">
+      <svg width="11" height="11" viewBox="0 0 50 62" fill="none"><line x1="25" y1="40" x2="25" y2="4" stroke="#0098b0" stroke-width="5" stroke-linecap="round"/><polyline points="13,16 25,3 37,16" fill="none" stroke="#0098b0" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/><path d="M10 28 L10 54 L40 54 L40 28" fill="none" stroke="#0098b0" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg>
     </span>`;
   }
 
@@ -275,7 +299,7 @@ if ('serviceWorker' in navigator) {
     banner.innerHTML = `
       <div class="pi-inner">
         <div class="pi-header">
-          <div class="pi-icon"><img src="icons/icon.svg" alt="Proofingo"></div>
+          <div class="pi-icon"><img src="IMG_7471.png" alt="Proofingo"></div>
           <div>
             <div class="pi-title">Add Proofingo to Home Screen</div>
             <div class="pi-sub">Play instantly — no app store needed</div>
@@ -288,7 +312,7 @@ if ('serviceWorker' in navigator) {
         <div class="pi-browser-tag">${chrome ? '🟡 Chrome' : '🧭 Safari'}</div>
         <div class="pi-steps">${stepsHtml}</div>
         <div class="pi-note">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#cc7700" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:1px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#0098b0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:1px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
           <span class="pi-note-text">Installing to your home screen gives you a full-screen experience with faster load times.</span>
         </div>
         ${!atTop ? '<span class="pi-caret">▼</span>' : ''}

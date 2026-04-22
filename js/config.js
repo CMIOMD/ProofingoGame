@@ -12,48 +12,41 @@ const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 // Player colour palette (slot 0–4)
 const PLAYER_COLORS = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#f9ca24'];
 
-// Default bingo squares (editable in admin) — 20 squares, 5 rows × 4 cols
+// Default bingo squares (editable in admin) — 9 squares, 3 rows × 3 cols
 const DEFAULT_SQUARES = [
   "Nobody Told Us About That",
-  "Super Users All Left After Go-Live",
   "Can It Work Like the Old System?",
-  "Skipped Every UAT Session",
   "Exec Sponsor Never Available",
-  "We Want to Go Back to Paper",
   "Physicians Refused Training",
-  "Discovery Questionnaire: Blank",
   "We Thought YOU Were Doing That",
-  "Steering Committee Ghosted Us",
   "Built a Workaround Instead of Fixing It",
-  "That's Not How WE Do It Here",
   "Go-Live With No Data Cleanup",
-  "Nobody Read the Release Notes",
   "Champion Quit Week 2",
-  "We Need It Custom Built",
-  "Optimization Review Cancelled Again",
-  "IT Said Yes, Clinical Said No",
-  "We Didn't Know That Feature Existed",
-  "Pre-Work Not Done By Go-Live"
+  "IT Said Yes, Clinical Said No"
 ];
 
 // ---- Bingo logic (shared) ----------------------------------------
 
 function checkBingo(markedSet) {
   const wins = [];
-  for (let r = 0; r < 5; r++) {
-    if ([0,1,2,3].every(c => markedSet.has(r*4+c))) wins.push(`row${r}`);
+  for (let r = 0; r < 3; r++) {
+    if ([0,1,2].every(c => markedSet.has(r*3+c))) wins.push(`row${r}`);
   }
-  for (let c = 0; c < 4; c++) {
-    if ([0,1,2,3,4].every(r => markedSet.has(r*4+c))) wins.push(`col${c}`);
+  for (let c = 0; c < 3; c++) {
+    if ([0,1,2].every(r => markedSet.has(r*3+c))) wins.push(`col${c}`);
   }
+  if ([0,4,8].every(i => markedSet.has(i))) wins.push('diag0');
+  if ([2,4,6].every(i => markedSet.has(i))) wins.push('diag1');
   return wins;
 }
 
 function getWinningPositions(wins) {
   const pos = new Set();
   wins.forEach(w => {
-    if (w.startsWith('row')) { const r=+w[3]; for(let c=0;c<4;c++) pos.add(r*4+c); }
-    if (w.startsWith('col')) { const c=+w[3]; for(let r=0;r<5;r++) pos.add(r*4+c); }
+    if (w.startsWith('row')) { const r=+w[3]; for(let c=0;c<3;c++) pos.add(r*3+c); }
+    if (w.startsWith('col')) { const c=+w[3]; for(let r=0;r<3;r++) pos.add(r*3+c); }
+    if (w === 'diag0') [0,4,8].forEach(i => pos.add(i));
+    if (w === 'diag1') [2,4,6].forEach(i => pos.add(i));
   });
   return pos;
 }
