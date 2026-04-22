@@ -312,7 +312,7 @@ let gameName    = null;
 let myMarks     = new Set();
 let allPlayers  = [];
 let allMarks    = {};
-let squares     = Array(20).fill('');
+let squares     = Array(9).fill('');
 let seenBingos          = new Set();
 let checkedInIds        = new Set();
 let firstStraightWinnerId = null;
@@ -482,6 +482,7 @@ async function showLobby() {
   } else {
     checkedInIds = new Set();
   }
+  renderLobbyPlayers();
   renderLobbyGame(activeGame);
 
   hideLoading();
@@ -612,8 +613,8 @@ async function enterGame(game) {
   document.getElementById('tb-game-name').textContent = game.name;
 
   const { data: sqData } = await db.from('squares').select('*').eq('game_id', gameId);
-  squares = Array(20).fill('');
-  (sqData || []).forEach(s => { if (s.position < 20) squares[s.position] = s.text; });
+  squares = Array(9).fill('');
+  (sqData || []).forEach(s => { if (s.position < 9) squares[s.position] = s.text; });
 
   const { data: markData } = await db.from('marks').select('*').eq('game_id', gameId);
   (markData || []).forEach(m => {
@@ -648,7 +649,7 @@ function buildGrid() {
 
   const winPos = getWinningPositions(checkBingo(myMarks));
 
-  for (let pos = 0; pos < 20; pos++) {
+  for (let pos = 0; pos < 9; pos++) {
     const isMarked = myMarks.has(pos);
     const isWin    = winPos.has(pos);
 
@@ -697,7 +698,7 @@ async function toggleMark(pos, cell) {
     );
   }
 
-  if (!wasMarked && hasBingo(myMarks) && !seenBingos.has(playerId)) {
+  if (!wasMarked && myMarks.size === 9 && !seenBingos.has(playerId)) {
     seenBingos.add(playerId);
     await db.from('bingo_events').upsert(
       { game_id: gameId, player_id: playerId, player_name: playerName },
@@ -742,8 +743,8 @@ function updateWinHighlights() {
 // ================================================================
 function renderScoreboard() {
   const sorted = [...allPlayers].sort((a,b) => {
-    const ab = hasBingo(allMarks[a.id]||new Set());
-    const bb = hasBingo(allMarks[b.id]||new Set());
+    const ab = (allMarks[a.id]||new Set()).size === 9;
+    const bb = (allMarks[b.id]||new Set()).size === 9;
     if (ab&&!bb) return -1; if (!ab&&bb) return 1;
     return (allMarks[b.id]||new Set()).size - (allMarks[a.id]||new Set()).size;
   });
@@ -758,7 +759,7 @@ function renderScoreboard() {
   sorted.forEach(p => {
     const marks = p.id === playerId ? myMarks : (allMarks[p.id] || new Set());
     const count = marks.size;
-    const bingo      = hasBingo(marks);
+    const bingo      = count === 9;
     const isYou      = p.id === playerId;
     const pct        = Math.round(count / 9 * 100);
     const firstLine  = !bingo && p.id === firstStraightWinnerId;

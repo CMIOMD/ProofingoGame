@@ -730,15 +730,15 @@ function renderAdminScoreboard() {
   const c = document.getElementById('admin-scoreboard');
   c.innerHTML = '';
   const sorted = [...allPlayers].sort((a,b) => {
-    const ab = hasBingo(allMarks[a.id]||new Set());
-    const bb = hasBingo(allMarks[b.id]||new Set());
+    const ab = (allMarks[a.id]||new Set()).size === 9;
+    const bb = (allMarks[b.id]||new Set()).size === 9;
     if (ab && !bb) return -1; if (!ab && bb) return 1;
     return (allMarks[b.id]||new Set()).size - (allMarks[a.id]||new Set()).size;
   });
   sorted.forEach(p => {
     const marks      = allMarks[p.id] || new Set();
     const count      = marks.size;
-    const bingo      = hasBingo(marks);
+    const bingo      = count === 9;
     const pct        = Math.round(count / 9 * 100);
     const firstLine  = !bingo && p.id === adminFirstStraightId;
     const firstDiag  = !bingo && !firstLine && p.id === adminFirstDiagId;
