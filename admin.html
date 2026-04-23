@@ -129,7 +129,7 @@ input::placeholder, textarea::placeholder { color:var(--text-muted); opacity:1; 
 .sq-ta {
   width:100%; aspect-ratio:1; padding:13px 4px 4px; background:var(--bg2);
   border:2px solid var(--border); border-radius:4px; color:var(--text);
-  font-family:var(--font); font-size:clamp(9px,2.2vw,11px); font-weight:600;
+  font-family:var(--font); font-size:clamp(11px,3vw,15px); font-weight:600;
   text-align:center; resize:none; outline:none; line-height:1.3; transition:border-color .15s;
 }
 .sq-ta:focus { border-color:var(--amber-dim); }
@@ -213,11 +213,7 @@ input::placeholder, textarea::placeholder { color:var(--text-muted); opacity:1; 
 
     <!-- Play Your Board banner (shown when a game is active) -->
     <div id="play-banner" style="display:none;margin-bottom:24px">
-      <div class="section-label" style="margin-bottom:12px">🎯 Game In Progress — Play Your Board</div>
-      <div style="font-size:11px;color:var(--text-muted);letter-spacing:1px;margin-bottom:12px;line-height:1.6">
-        Tap your name to open your personal bingo board. Players who already have their link open will see the board automatically — or they can tap their invite link again to jump in.
-      </div>
-      <div id="play-player-btns" style="display:flex;flex-wrap:wrap;gap:8px"></div>
+      <a id="play-lobby-btn" href="#" class="btn btn-amber btn-full">🎯 Join Game Lobby →</a>
     </div>
 
     <!-- Players & Invite Links -->
@@ -689,22 +685,14 @@ async function loadActiveGameScores() {
     tabsEl.style.display = 'none';
   }
 
-  // Populate play-your-board buttons — only show this device's own player
+  // Show lobby button if this device has a player session
   const mySessionIds = new Set(JSON.parse(localStorage.getItem('bingo_session_index') || '[]'));
-  const myPlayers = allPlayers.filter(p => mySessionIds.has(p.id));
-  const btnContainer = document.getElementById('play-player-btns');
-  btnContainer.innerHTML = '';
-  if (myPlayers.length === 0) {
-    banner.style.display = 'none';
-  } else {
+  const myPlayer = allPlayers.find(p => mySessionIds.has(p.id));
+  if (myPlayer) {
+    document.getElementById('play-lobby-btn').href = playerInviteUrl(myPlayer.id);
     banner.style.display = 'block';
-    myPlayers.forEach(p => {
-      const a = document.createElement('a');
-      a.href = playerInviteUrl(p.id);
-      a.className = 'play-btn';
-      a.innerHTML = `<span class="dot" style="background:${p.color}"></span>${p.name}`;
-      btnContainer.appendChild(a);
-    });
+  } else {
+    banner.style.display = 'none';
   }
 
   const { data: markData } = await db.from('marks').select('*').eq('game_id', activeGameId);
