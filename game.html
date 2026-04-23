@@ -128,9 +128,12 @@ body::before {
   box-shadow:0 4px 14px rgba(0,0,0,0.45), 0 0 22px rgba(100,220,90,0.55), inset 0 0 14px rgba(100,220,90,0.15);
 }
 .cell.free { cursor:default; background:linear-gradient(135deg,#061525,#041020); border:2px solid var(--amber-dim); }
+.cell.pending-unmark { border:3px solid #ff6b6b !important; box-shadow:0 4px 14px rgba(0,0,0,0.45), 0 0 14px rgba(255,107,107,0.45), inset 0 0 14px rgba(255,107,107,0.18) !important; }
+.cell.pending-unmark .cell-stamp { color:#ff6b6b; }
+.cell.pending-unmark::after { content:'TAP AGAIN'; position:absolute; bottom:5px; left:0; right:0; text-align:center; font-size:8px; letter-spacing:1.5px; color:#ff6b6b; font-family:var(--font); font-weight:900; z-index:3; pointer-events:none; }
 .cell-stamp { position:absolute; inset:0; display:none; align-items:center; justify-content:center; font-size:clamp(28px,7vw,44px); color:var(--amber); opacity:0.40; pointer-events:none; }
 .cell.marked .cell-stamp { display:flex; }
-.cell-text { font-size:clamp(7.5px,1.75vw,11.5px); line-height:1.4; color:#5a7090; font-weight:600; white-space:pre-line; position:relative; z-index:1; }
+.cell-text { font-size:clamp(11px,3vw,15px); line-height:1.35; color:#8aafc8; font-weight:600; white-space:pre-line; position:relative; z-index:1; -webkit-font-smoothing:antialiased; }
 .cell.marked .cell-text { color:var(--text); font-weight:800; }
 .cell.free .cell-text { color:var(--amber); font-weight:900; }
 .cell.winning .cell-text { color:#c8f5c6; }
@@ -172,8 +175,12 @@ body::before {
 .lobby-player-row.is-you { border-color:var(--amber-dim); box-shadow:0 2px 10px rgba(0,0,0,0.4), 0 0 6px rgba(0,152,176,0.15), inset 0 1px 0 rgba(255,255,255,0.04); }
 .lobby-player-name { font-size:13px; font-weight:700; color:var(--text); flex:1; }
 .lobby-you-tag { font-size:8px; letter-spacing:2px; color:var(--bg); background:var(--amber); padding:2px 5px; border-radius:2px; font-weight:900; }
-.lobby-game-card { background:var(--bg2); border:2px solid var(--border); border-radius:5px; padding:16px; box-shadow:0 4px 16px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.04); }
+.lobby-game-card { background:var(--bg2); border:2px solid var(--border); border-radius:5px; padding:16px; box-shadow:0 4px 16px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.04); margin-bottom:12px; }
 .lobby-game-card.is-active { border-color:var(--amber); box-shadow:0 4px 20px rgba(0,0,0,0.45), 0 0 16px rgba(0,207,232,0.2), inset 0 1px 0 rgba(255,255,255,0.06); }
+.game-checkin-roster { display:flex; flex-wrap:wrap; gap:6px 12px; margin-bottom:12px; }
+.game-checkin-item { display:flex; align-items:center; gap:4px; font-size:10px; letter-spacing:.5px; }
+.game-checkin-item.ready { color:#7ee87a; }
+.game-checkin-item.waiting { color:var(--text-muted); }
 .lobby-game-name { font-size:15px; font-weight:700; color:var(--text); margin-bottom:6px; }
 .lobby-badge { display:inline-block; font-size:9px; letter-spacing:2px; padding:3px 8px; border-radius:2px; font-weight:900; text-transform:uppercase; margin-bottom:14px; }
 .lobby-badge-active { background:var(--amber); color:var(--bg); }
@@ -252,7 +259,7 @@ body::before {
   <div class="lobby-wrap">
     <div class="lobby-slabel" style="margin-top:8px">Players</div>
     <div id="lobby-players"></div>
-    <div class="lobby-slabel">Game</div>
+    <div class="lobby-slabel">Games</div>
     <div id="lobby-game-status"></div>
   </div>
 </div>
@@ -272,9 +279,6 @@ body::before {
   </div>
 
   <div class="board-wrap">
-    <div class="bingo-letters">
-      <div class="bingo-l">P</div><div class="bingo-l">R</div><div class="bingo-l">O</div>
-    </div>
     <div class="grid" id="grid"></div>
   </div>
 
@@ -314,11 +318,13 @@ let allPlayers  = [];
 let allMarks    = {};
 let squares     = Array(9).fill('');
 let seenBingos          = new Set();
-let checkedInIds        = new Set();
+let gameCheckedInIds    = {};
 let firstStraightWinnerId = null;
 let firstDiagWinnerId     = null;
 let channel             = null;
-let gridBuilt   = false;
+let gridBuilt           = false;
+let pendingUnmarkPos    = null;
+let pendingUnmarkTimer  = null;
 
 // ================================================================
 // SESSION STORAGE — multi-group, multi-admin support
@@ -368,12 +374,6 @@ window.addEventListener('DOMContentLoaded', async () => {
     }
 
     const alreadyClaimed = localStorage.getItem(`bingo_session_${pid}`);
-
-    // Link already claimed by a different device
-    if (player.claimed && !alreadyClaimed) {
-      showError('This invite link has already been used on another device. Each link is personal — ask your admin to re-send yours.');
-      return;
-    }
 
     // Claim the link on first use
     if (!player.claimed) {
@@ -474,16 +474,17 @@ async function showLobby() {
 
   const { data: games } = await db.from('games').select('*')
     .eq('group_id', groupId).neq('status', 'finished')
-    .order('created_at', { ascending: false }).limit(1);
-  const activeGame = games && games[0];
-  if (activeGame && activeGame.status === 'active') {
-    const { data: ciRows } = await db.from('check_ins').select('player_id').eq('game_id', activeGame.id);
-    checkedInIds = new Set((ciRows || []).map(r => r.player_id));
-  } else {
-    checkedInIds = new Set();
+    .order('created_at', { ascending: true });
+
+  gameCheckedInIds = {};
+  for (const g of (games || [])) {
+    if (g.status === 'active') {
+      const { data: ciRows } = await db.from('check_ins').select('player_id').eq('game_id', g.id);
+      gameCheckedInIds[g.id] = new Set((ciRows || []).map(r => r.player_id));
+    }
   }
   renderLobbyPlayers();
-  renderLobbyGame(activeGame);
+  renderLobbyGames(games || []);
 
   hideLoading();
   subscribeRealtime();
@@ -496,23 +497,23 @@ function renderLobbyPlayers() {
   c.innerHTML = '';
   allPlayers.forEach(p => {
     const isYou = p.id === playerId;
-    const ready = checkedInIds.has(p.id);
     const row = document.createElement('div');
     row.className = 'lobby-player-row' + (isYou ? ' is-you' : '');
     row.innerHTML = `
       <div class="tb-dot" style="background:${p.color}"></div>
       <span class="lobby-player-name">${p.name}</span>
       ${isYou ? '<span class="lobby-you-tag">YOU</span>' : ''}
-      <span class="checkin-status ${ready ? 'checkin-ready' : ''}">${ready ? '✓ Ready' : 'waiting...'}</span>
     `;
     c.appendChild(row);
   });
 }
 
-function renderLobbyGame(game) {
+function renderLobbyGames(games) {
   const c = document.getElementById('lobby-game-status');
   if (!c) return;
-  if (!game) {
+  c.innerHTML = '';
+
+  if (games.length === 0) {
     c.innerHTML = `
       <div class="lobby-waiting-msg">No game set up yet.<br>The admin will create one soon.</div>
       <div class="lobby-pulse">
@@ -520,57 +521,74 @@ function renderLobbyGame(game) {
       </div>`;
     return;
   }
-  if (game.status === 'active') {
-    const allReady = allPlayers.length > 0 && allPlayers.every(p => checkedInIds.has(p.id));
-    const iCheckedIn = checkedInIds.has(playerId);
-    c.innerHTML = `
-      <div class="lobby-game-card is-active">
+
+  games.forEach(game => {
+    const card = document.createElement('div');
+    if (game.status === 'active') {
+      const ciSet = gameCheckedInIds[game.id] || new Set();
+      const allReady = allPlayers.length > 0 && allPlayers.every(p => ciSet.has(p.id));
+      const iCheckedIn = ciSet.has(playerId);
+
+      const rosterHtml = allPlayers.map(p => {
+        const ready = ciSet.has(p.id);
+        const isYou = p.id === playerId;
+        return `<div class="game-checkin-item${ready ? ' ready' : ' waiting'}">
+          <div style="width:8px;height:8px;border-radius:50%;background:${p.color};flex-shrink:0"></div>
+          <span>${p.name}${isYou ? ' (you)' : ''}</span>
+          ${ready ? '<span>✓</span>' : ''}
+        </div>`;
+      }).join('');
+
+      card.className = 'lobby-game-card is-active';
+      card.innerHTML = `
         <div class="lobby-game-name">${game.name}</div>
         <div><span class="lobby-badge lobby-badge-active">● ACTIVE</span></div>
-        <button class="lobby-checkin-btn" id="checkin-btn" ${iCheckedIn ? 'disabled' : ''} onclick="checkIn('${game.id}')">
+        <div class="game-checkin-roster">${rosterHtml}</div>
+        <button class="lobby-checkin-btn" id="checkin-btn-${game.id}" ${iCheckedIn ? 'disabled' : ''} onclick="checkIn('${game.id}')">
           ${iCheckedIn ? "✓ YOU'RE CHECKED IN" : "I'M READY! ✓"}
         </button>
-        <button class="lobby-enter-btn" ${allReady ? '' : 'disabled'} onclick="enterLobbyGame()">
+        <button class="lobby-enter-btn" ${allReady ? '' : 'disabled'} onclick="enterLobbyGame('${game.id}')">
           ${allReady ? 'Enter Game →' : 'Waiting for all players to check in...'}
         </button>
         ${!allReady ? '<div class="lobby-waiting-msg" style="padding-top:10px">Give your friends a little nudge to get this game going! 👋</div>' : ''}
-      </div>`;
-  } else {
-    c.innerHTML = `
-      <div class="lobby-game-card">
+      `;
+    } else {
+      card.className = 'lobby-game-card';
+      card.innerHTML = `
         <div class="lobby-game-name">${game.name}</div>
         <div><span class="lobby-badge lobby-badge-setup">SETUP — WAITING TO ACTIVATE</span></div>
         <div class="lobby-waiting-msg" style="padding-top:8px">The admin will start this game soon.</div>
-        <div class="lobby-pulse">
-          <div class="pulse-dot"></div><div class="pulse-dot"></div><div class="pulse-dot"></div>
-        </div>
-      </div>`;
-  }
+      `;
+    }
+    c.appendChild(card);
+  });
 }
 
-async function enterLobbyGame() {
+async function enterLobbyGame(gid) {
   document.getElementById('screen-lobby').classList.remove('show');
   document.getElementById('screen-loading').style.display = 'flex';
-  await startGame();
+  await startGame(gid);
 }
 
 async function checkIn(gid) {
-  const btn = document.getElementById('checkin-btn');
+  const btn = document.getElementById(`checkin-btn-${gid}`);
   if (btn) { btn.disabled = true; btn.textContent = 'Checking in...'; }
   await db.from('check_ins').upsert(
     { game_id: gid, player_id: playerId },
     { onConflict: 'game_id,player_id' }
   );
-  checkedInIds.add(playerId);
-  renderLobbyPlayers();
-  const { data: game } = await db.from('games').select('*').eq('id', gid).single();
-  if (game) renderLobbyGame(game);
+  if (!gameCheckedInIds[gid]) gameCheckedInIds[gid] = new Set();
+  gameCheckedInIds[gid].add(playerId);
+  const { data: games } = await db.from('games').select('*')
+    .eq('group_id', groupId).neq('status', 'finished')
+    .order('created_at', { ascending: true });
+  renderLobbyGames(games || []);
 }
 
 // ================================================================
 // START GAME — find active game in group
 // ================================================================
-async function startGame() {
+async function startGame(preferredGameId) {
   const { data: players } = await db.from('players').select('*').eq('group_id', groupId).order('joined_at');
   allPlayers = players || [];
 
@@ -579,10 +597,18 @@ async function startGame() {
   document.getElementById('waiting-dot').style.background = playerColor;
   document.getElementById('waiting-name').textContent   = playerName;
 
-  const { data: games } = await db.from('games').select('*')
-    .eq('group_id', groupId).eq('status', 'active').limit(1);
+  let activeGame = null;
 
-  const activeGame = games && games[0];
+  if (preferredGameId) {
+    const { data: g } = await db.from('games').select('*').eq('id', preferredGameId).single();
+    if (g && g.status === 'active') activeGame = g;
+  }
+
+  if (!activeGame) {
+    const { data: games } = await db.from('games').select('*')
+      .eq('group_id', groupId).eq('status', 'active').limit(1);
+    activeGame = games && games[0];
+  }
 
   hideLoading();
   subscribeRealtime();
@@ -606,8 +632,9 @@ async function enterGame(game) {
   seenBingos = new Set();
   firstStraightWinnerId = null;
   firstDiagWinnerId     = null;
-  checkedInIds          = new Set();
-  gridBuilt  = false;
+  gameCheckedInIds      = {};
+  gridBuilt             = false;
+  clearPendingUnmark();
   allPlayers.forEach(p => { allMarks[p.id] = new Set(); });
 
   document.getElementById('tb-game-name').textContent = game.name;
@@ -670,35 +697,55 @@ function buildGrid() {
     txt.textContent = squares[pos] || '';
     cell.appendChild(txt);
 
-    cell.addEventListener('pointerdown', e => { e.preventDefault(); toggleMark(pos, cell); });
+    cell.addEventListener('click', () => toggleMark(pos, cell));
     grid.appendChild(cell);
   }
+}
+
+function clearPendingUnmark() {
+  if (pendingUnmarkPos !== null) {
+    const el = document.querySelector(`#grid .cell[data-pos="${pendingUnmarkPos}"]`);
+    if (el) el.classList.remove('pending-unmark');
+    pendingUnmarkPos = null;
+  }
+  if (pendingUnmarkTimer) { clearTimeout(pendingUnmarkTimer); pendingUnmarkTimer = null; }
 }
 
 async function toggleMark(pos, cell) {
   const wasMarked = myMarks.has(pos);
 
   if (wasMarked) {
-    myMarks.delete(pos);
-    cell.classList.remove('marked', 'winning');
-  } else {
-    myMarks.add(pos);
-    cell.classList.add('marked');
+    if (pendingUnmarkPos === pos) {
+      // Second tap — confirm unmark
+      clearPendingUnmark();
+      myMarks.delete(pos);
+      cell.classList.remove('marked', 'winning');
+      updateWinHighlights();
+      renderScoreboard();
+      await db.from('marks').delete().eq('player_id', playerId).eq('game_id', gameId).eq('position', pos);
+    } else {
+      // First tap on a marked cell — request confirmation
+      clearPendingUnmark();
+      pendingUnmarkPos = pos;
+      cell.classList.add('pending-unmark');
+      pendingUnmarkTimer = setTimeout(clearPendingUnmark, 3000);
+    }
+    return;
   }
 
+  // Unmarked cell — mark immediately
+  clearPendingUnmark();
+  myMarks.add(pos);
+  cell.classList.add('marked');
   updateWinHighlights();
   renderScoreboard();
 
-  if (wasMarked) {
-    await db.from('marks').delete().eq('player_id', playerId).eq('game_id', gameId).eq('position', pos);
-  } else {
-    await db.from('marks').upsert(
-      { game_id: gameId, player_id: playerId, position: pos },
-      { onConflict: 'player_id,game_id,position' }
-    );
-  }
+  await db.from('marks').upsert(
+    { game_id: gameId, player_id: playerId, position: pos },
+    { onConflict: 'player_id,game_id,position' }
+  );
 
-  if (!wasMarked && myMarks.size === 9 && !seenBingos.has(playerId)) {
+  if (myMarks.size === 9 && !seenBingos.has(playerId)) {
     seenBingos.add(playerId);
     await db.from('bingo_events').upsert(
       { game_id: gameId, player_id: playerId, player_name: playerName },
@@ -706,18 +753,16 @@ async function toggleMark(pos, cell) {
     );
   }
 
-  if (!wasMarked) {
-    const { hasStraight, hasDiag } = classifyWins(checkBingo(myMarks));
-    if (hasStraight && !firstStraightWinnerId) {
-      firstStraightWinnerId = playerId;
-      renderScoreboard();
-      await db.from('first_line_events').insert({ game_id: gameId, player_id: playerId, player_name: playerName, line_type: 'straight' });
-    }
-    if (hasDiag && !firstDiagWinnerId) {
-      firstDiagWinnerId = playerId;
-      renderScoreboard();
-      await db.from('first_line_events').insert({ game_id: gameId, player_id: playerId, player_name: playerName, line_type: 'diagonal' });
-    }
+  const { hasStraight, hasDiag } = classifyWins(checkBingo(myMarks));
+  if (hasStraight && !firstStraightWinnerId) {
+    firstStraightWinnerId = playerId;
+    renderScoreboard();
+    await db.from('first_line_events').insert({ game_id: gameId, player_id: playerId, player_name: playerName, line_type: 'straight' });
+  }
+  if (hasDiag && !firstDiagWinnerId) {
+    firstDiagWinnerId = playerId;
+    renderScoreboard();
+    await db.from('first_line_events').insert({ game_id: gameId, player_id: playerId, player_name: playerName, line_type: 'diagonal' });
   }
 }
 
@@ -838,11 +883,13 @@ function subscribeRealtime() {
     }, async payload => {
       const ci = payload.new;
       if (!ci) return;
-      checkedInIds.add(ci.player_id);
-      renderLobbyPlayers();
+      if (!gameCheckedInIds[ci.game_id]) gameCheckedInIds[ci.game_id] = new Set();
+      gameCheckedInIds[ci.game_id].add(ci.player_id);
       if (document.getElementById('screen-lobby').classList.contains('show')) {
-        const { data: game } = await db.from('games').select('*').eq('id', ci.game_id).single();
-        if (game) renderLobbyGame(game);
+        const { data: games } = await db.from('games').select('*')
+          .eq('group_id', groupId).neq('status', 'finished')
+          .order('created_at', { ascending: true });
+        renderLobbyGames(games || []);
       }
     })
 
@@ -852,20 +899,28 @@ function subscribeRealtime() {
       const updated = payload.new;
       if (!updated || updated.group_id !== groupId) return;
 
-      // If the lobby is visible, refresh the game status card
       if (document.getElementById('screen-lobby').classList.contains('show')) {
-        renderLobbyGame(updated.status !== 'finished' ? updated : null);
+        // A game changed — refresh the full games list
+        if (updated.status === 'active' && !gameCheckedInIds[updated.id]) {
+          const { data: ciRows } = await db.from('check_ins').select('player_id').eq('game_id', updated.id);
+          gameCheckedInIds[updated.id] = new Set((ciRows || []).map(r => r.player_id));
+        }
+        const { data: games } = await db.from('games').select('*')
+          .eq('group_id', groupId).neq('status', 'finished')
+          .order('created_at', { ascending: true });
+        renderLobbyGames(games || []);
         return;
       }
 
-      if (updated.status === 'active' && updated.id !== gameId) {
-        dismissOverlay();
-        showWaiting();
-        setTimeout(async () => { await enterGame(updated); }, 800);
-      } else if (updated.status !== 'active' && updated.id === gameId) {
-        showWaiting();
+      // In-game: only react if the current game ended
+      if (updated.status !== 'active' && updated.id === gameId) {
         gameId = null;
+        dismissOverlay();
+        document.getElementById('screen-game').classList.remove('show');
+        document.getElementById('screen-loading').style.display = 'flex';
+        await showLobby();
       }
+      // A new game activating while player is in another game — do nothing, they can switch via lobby
     })
 
     .subscribe();
@@ -907,6 +962,15 @@ function dismissOverlay() {
 // NAVIGATION
 // ================================================================
 function goBack() {
+  if (document.getElementById('screen-game').classList.contains('show') && groupId) {
+    // From game board → go back to lobby so player can switch games
+    dismissOverlay();
+    document.getElementById('screen-game').classList.remove('show');
+    document.getElementById('screen-loading').style.display = 'flex';
+    gameId = null;
+    showLobby();
+    return;
+  }
   if (channel) { db.removeChannel(channel); channel = null; }
   window.location.href = 'index.html';
 }

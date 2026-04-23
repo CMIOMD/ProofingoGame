@@ -97,13 +97,12 @@ input::placeholder, textarea::placeholder { color:var(--text-muted); opacity:1; 
 .player-setup-row input { flex:1; background:transparent; border:none; border-bottom:1px solid var(--border); color:var(--text); font-family:var(--font); font-size:13px; outline:none; padding:2px 0; }
 .player-setup-row input:focus { border-bottom-color:var(--amber-dim); }
 
-/* Invite card */
-.invite-card { background:var(--bg2); border:2px solid var(--border); border-radius:5px; padding:14px 16px; margin-bottom:10px; box-shadow:0 4px 16px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.04); }
-.invite-card-top { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
-.invite-card-top .dot { width:13px; height:13px; border-radius:50%; flex-shrink:0; }
-.invite-card-top .name { font-size:15px; font-weight:700; color:var(--text); }
-.invite-link-box { background:var(--bg3); border:1px solid var(--border); border-radius:3px; padding:8px 10px; font-size:10px; color:var(--text-muted); word-break:break-all; letter-spacing:.5px; margin-bottom:10px; line-height:1.5; }
-.invite-actions { display:flex; gap:6px; flex-wrap:wrap; }
+/* Invite rows */
+.invite-row { display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid var(--border); }
+.invite-row:last-child { border-bottom:none; }
+.invite-row .dot { width:11px; height:11px; border-radius:50%; flex-shrink:0; }
+.invite-row-name { font-size:14px; font-weight:700; color:var(--text); flex:1; }
+.invite-row-actions { display:flex; gap:6px; flex-shrink:0; }
 
 /* Group ID box */
 .group-id-box { background:var(--amber-dark); border:2px solid var(--amber-dim); border-radius:5px; padding:14px 16px; margin-bottom:20px; box-shadow:0 4px 18px rgba(0,0,0,0.45), 0 0 12px rgba(0,152,176,0.12), inset 0 1px 0 rgba(0,207,232,0.08); }
@@ -156,6 +155,12 @@ input::placeholder, textarea::placeholder { color:var(--text-muted); opacity:1; 
 .sb-bingo { font-size:10px; letter-spacing:1px; color:var(--bg); background:var(--amber); padding:3px 7px; border-radius:2px; font-weight:900; white-space:nowrap; }
 .sb-first-line { font-size:10px; letter-spacing:1px; color:var(--bg); background:#7a8fa8; padding:3px 7px; border-radius:2px; font-weight:900; white-space:nowrap; }
 .sb-first-diag { font-size:10px; letter-spacing:1px; color:var(--bg); background:#5ad4e8; padding:3px 7px; border-radius:2px; font-weight:900; white-space:nowrap; }
+
+/* Scoreboard game tabs */
+.sb-tabs { display:flex; gap:0; border-bottom:2px solid var(--border); overflow-x:auto; margin-bottom:14px; -webkit-overflow-scrolling:touch; }
+.sb-tab { padding:9px 14px; font-family:var(--font); font-size:10px; letter-spacing:2px; font-weight:700; text-transform:uppercase; cursor:pointer; color:var(--text-muted); background:none; border:none; border-bottom:2px solid transparent; margin-bottom:-2px; white-space:nowrap; transition:color .15s, border-color .15s; touch-action:manipulation; -webkit-tap-highlight-color:transparent; }
+.sb-tab.active { color:var(--amber); border-bottom-color:var(--amber); }
+.sb-tab:hover:not(.active) { color:var(--text); }
 </style>
 </head>
 <body>
@@ -196,16 +201,10 @@ input::placeholder, textarea::placeholder { color:var(--text-muted); opacity:1; 
   <div class="view" id="view-dashboard">
 
     <!-- Group Name Header -->
-    <div style="margin-bottom:24px;">
+    <div style="margin-bottom:28px;">
       <div style="font-size:10px;letter-spacing:4px;color:var(--text-muted);text-transform:uppercase;margin-bottom:6px;">Group</div>
-      <div id="dash-group-name-display" style="font-size:clamp(24px,6vw,36px);font-weight:900;color:var(--amber);letter-spacing:-1px;line-height:1.1;word-break:break-word;"></div>
-    </div>
-
-    <!-- Group ID (bookmark this) -->
-    <div class="group-id-box">
-      <div class="group-id-label">Group ID — Save this to come back later</div>
-      <div class="group-id-value" id="dash-group-id">—</div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <div id="dash-group-name-display" style="font-size:clamp(24px,6vw,36px);font-weight:900;color:var(--amber);letter-spacing:-1px;line-height:1.1;word-break:break-word;margin-bottom:14px;"></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
         <button class="btn btn-sm btn-outline" onclick="copyGroupId()">Copy Group ID</button>
         <button class="btn btn-sm btn-outline" onclick="copyAdminLink()">Copy Admin Link</button>
         <button class="btn btn-sm btn-danger" onclick="endGroup()" style="margin-left:auto">⊗ End Group</button>
@@ -235,6 +234,7 @@ input::placeholder, textarea::placeholder { color:var(--text-muted); opacity:1; 
     <!-- Live Scoreboard (for active game) -->
     <div id="scoreboard-section" style="display:none">
       <div class="section-label" style="margin-top:28px">Live Scores — <span id="sb-game-name" style="color:var(--amber)"></span></div>
+      <div id="sb-game-tabs" class="sb-tabs" style="display:none"></div>
       <div id="admin-scoreboard"></div>
     </div>
   </div>
@@ -294,6 +294,7 @@ let allGames     = [];
 let editingGameId = null;
 let allMarks     = {};
 let activeGameId = null;
+let scoreboardGameId = null;
 let adminFirstStraightId = null;
 let adminFirstDiagId     = null;
 let adminCheckedInIds    = new Set();
@@ -439,7 +440,6 @@ async function loadGroup() {
   const { data: games } = await db.from('games').select('*').eq('group_id', groupId).order('created_at');
   allGames = games || [];
 
-  document.getElementById('dash-group-id').textContent = groupId;
   document.getElementById('dash-group-name-display').textContent = groupName;
   renderInviteCards();
   renderGamesList();
@@ -460,22 +460,17 @@ function renderInviteCards() {
     return;
   }
   allPlayers.forEach(p => {
-    const url = playerInviteUrl(p.id);
-    const card = document.createElement('div');
-    card.className = 'invite-card';
-    card.innerHTML = `
-      <div class="invite-card-top">
-        <div class="dot" style="background:${p.color}"></div>
-        <div class="name">${p.name}</div>
-      </div>
-      <div class="invite-link-box">${url}</div>
-      <div class="invite-actions">
+    const row = document.createElement('div');
+    row.className = 'invite-row';
+    row.innerHTML = `
+      <div class="dot" style="background:${p.color}"></div>
+      <span class="invite-row-name">${p.name}</span>
+      <div class="invite-row-actions">
         <button class="btn btn-sm btn-outline" onclick="copyInviteLink('${p.id}','${p.name}')">📋 Copy Link</button>
-        <button class="btn btn-sm btn-outline" onclick="emailInvite('${p.id}','${p.name}')">📧 Email</button>
         <button class="btn btn-sm btn-outline" onclick="smsInvite('${p.id}','${p.name}')">💬 Text</button>
       </div>
     `;
-    c.appendChild(card);
+    c.appendChild(row);
   });
 }
 
@@ -537,8 +532,8 @@ function renderGamesList() {
         <button class="btn btn-sm btn-outline" onclick="showGameEditor('${g.id}')">✏️ Edit</button>
         ${g.status !== 'active'
           ? `<button class="btn btn-sm btn-green" onclick="activateGame('${g.id}')">▶ Activate</button>`
-          : `<button class="btn btn-sm btn-danger" onclick="finishGame('${g.id}')">■  End Game</button>
-             <button class="btn btn-sm btn-override" id="override-game-btn" onclick="showOverrideConfirm()" style="display:none">⚡ Override Check-in</button>`
+          : `<button class="btn btn-sm btn-danger" onclick="finishGame('${g.id}')">■ End Game</button>
+             <button class="btn btn-sm btn-override" id="override-btn-${g.id}" onclick="showOverrideConfirm('${g.id}')">⚡ Override Check-in</button>`
         }
       </div>
     `;
@@ -547,11 +542,10 @@ function renderGamesList() {
 }
 
 async function activateGame(gid) {
-  await db.from('games').update({ status:'finished' }).eq('group_id', groupId).eq('status','active');
   const { error } = await db.from('games').update({ status:'active' }).eq('id', gid);
   if (error) { showAlert('Error activating game.'); return; }
   await loadGroup();
-  showAlert('Game is now live — players will switch automatically!', 'success');
+  showAlert('Game is now live!', 'success');
 }
 
 function finishGame(gid) {
@@ -590,9 +584,10 @@ async function showGameEditor(gid) {
     });
   } else {
     document.getElementById('game-name-input').value = `Game ${allGames.length + 1}`;
+    const exampleSquares = ["A Pencil Sharpener", "A Blood Pressure Cuff"];
     let sqIdx = 0;
     document.querySelectorAll('#editor-grid textarea').forEach(ta => {
-      ta.value = DEFAULT_SQUARES[sqIdx++] || '';
+      ta.value = exampleSquares[sqIdx++] || '';
     });
   }
 }
@@ -630,9 +625,6 @@ async function saveGame(andActivate) {
   let gameId = editingGameId;
 
   if (!gameId) {
-    if (andActivate) {
-      await db.from('games').update({ status:'finished' }).eq('group_id', groupId).eq('status','active');
-    }
     const roundNumber = allGames.length + 1;
     const { data: newGame, error } = await db.from('games').insert({
       group_id: groupId,
@@ -645,7 +637,6 @@ async function saveGame(andActivate) {
   } else {
     await db.from('games').update({ name: gameName }).eq('id', gameId);
     if (andActivate) {
-      await db.from('games').update({ status:'finished' }).eq('group_id', groupId).eq('status','active');
       await db.from('games').update({ status:'active' }).eq('id', gameId);
     }
   }
@@ -665,20 +656,38 @@ async function saveGame(andActivate) {
 // LIVE SCOREBOARD (admin view)
 // ================================================================
 async function loadActiveGameScores() {
-  const activeGame = allGames.find(g => g.status === 'active');
+  const activeGames = allGames.filter(g => g.status === 'active');
   const section = document.getElementById('scoreboard-section');
   const banner  = document.getElementById('play-banner');
 
-  if (!activeGame) {
+  if (activeGames.length === 0) {
     section.style.display = 'none';
     banner.style.display  = 'none';
     activeGameId = null;
+    scoreboardGameId = null;
     return;
   }
 
-  activeGameId = activeGame.id;
+  // Keep current tab selection if still valid, otherwise pick first active game
+  if (!scoreboardGameId || !activeGames.find(g => g.id === scoreboardGameId)) {
+    scoreboardGameId = activeGames[0].id;
+  }
+  activeGameId = scoreboardGameId;
+  const activeGame = activeGames.find(g => g.id === activeGameId);
+
   section.style.display = 'block';
   document.getElementById('sb-game-name').textContent = activeGame.name;
+
+  // Render tabs when multiple games are active
+  const tabsEl = document.getElementById('sb-game-tabs');
+  if (activeGames.length > 1) {
+    tabsEl.style.display = 'flex';
+    tabsEl.innerHTML = activeGames.map(g =>
+      `<button class="sb-tab${g.id === activeGameId ? ' active' : ''}" onclick="switchScoreboardGame('${g.id}')">${g.name}</button>`
+    ).join('');
+  } else {
+    tabsEl.style.display = 'none';
+  }
 
   // Populate play-your-board buttons — only show this device's own player
   const mySessionIds = new Set(JSON.parse(localStorage.getItem('bingo_session_index') || '[]'));
@@ -721,9 +730,11 @@ async function loadActiveGameScores() {
   (ciRows || []).forEach(r => adminCheckedInIds.add(r.player_id));
 
   renderAdminScoreboard();
-  const allCheckedIn = allPlayers.length > 0 && allPlayers.every(p => adminCheckedInIds.has(p.id));
-  const overrideBtn = document.getElementById('override-game-btn');
-  if (overrideBtn) overrideBtn.style.display = allCheckedIn ? 'none' : '';
+}
+
+async function switchScoreboardGame(gid) {
+  scoreboardGameId = gid;
+  await loadActiveGameScores();
 }
 
 function renderAdminScoreboard() {
@@ -794,7 +805,7 @@ async function runConfirmAction() {
   closeConfirmModal();
 }
 
-function showOverrideConfirm() {
+function showOverrideConfirm(gid) {
   showConfirm({
     icon: '⚡',
     title: 'Override Check-In?',
@@ -803,12 +814,8 @@ function showOverrideConfirm() {
     confirmClass: 'btn-override',
     borderColor: '#f5c400',
     onConfirm: async () => {
-      if (!activeGameId) return;
-      const rows = allPlayers.map(p => ({ game_id: activeGameId, player_id: p.id }));
+      const rows = allPlayers.map(p => ({ game_id: gid, player_id: p.id }));
       await db.from('check_ins').upsert(rows, { onConflict: 'game_id,player_id' });
-      allPlayers.forEach(p => adminCheckedInIds.add(p.id));
-      const overrideBtn = document.getElementById('override-game-btn');
-      if (overrideBtn) overrideBtn.style.display = 'none';
     }
   });
 }
@@ -837,11 +844,8 @@ function subscribeRealtime() {
       event: 'INSERT', schema: 'public', table: 'check_ins'
     }, payload => {
       const ci = payload.new;
-      if (!ci || !activeGameId) return;
+      if (!ci || ci.game_id !== activeGameId) return;
       adminCheckedInIds.add(ci.player_id);
-      const allCheckedIn = allPlayers.length > 0 && allPlayers.every(p => adminCheckedInIds.has(p.id));
-      const overrideBtn = document.getElementById('override-game-btn');
-      if (overrideBtn) overrideBtn.style.display = allCheckedIn ? 'none' : '';
     })
     .on('postgres_changes', {
       event: 'UPDATE', schema: 'public', table: 'games',
