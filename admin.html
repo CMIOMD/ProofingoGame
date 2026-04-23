@@ -204,10 +204,10 @@ input::placeholder, textarea::placeholder { color:var(--text-muted); opacity:1; 
     <div style="margin-bottom:28px;">
       <div style="font-size:10px;letter-spacing:4px;color:var(--text-muted);text-transform:uppercase;margin-bottom:6px;">Group</div>
       <div id="dash-group-name-display" style="font-size:clamp(24px,6vw,36px);font-weight:900;color:var(--amber);letter-spacing:-1px;line-height:1.1;word-break:break-word;margin-bottom:14px;"></div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
-        <button class="btn btn-sm btn-outline" onclick="copyGroupId()">Copy Group ID</button>
-        <button class="btn btn-sm btn-outline" onclick="copyAdminLink()">Copy Admin Link</button>
-        <button class="btn btn-sm btn-danger" onclick="endGroup()" style="margin-left:auto">⊗ End Group</button>
+      <div style="display:flex;gap:8px;flex-wrap:nowrap;">
+        <button class="btn btn-sm btn-outline" style="flex:1" onclick="copyGroupId()">Copy Group ID</button>
+        <button class="btn btn-sm btn-outline" style="flex:1" onclick="copyAdminLink()">Copy Admin Link</button>
+        <button class="btn btn-sm btn-danger" style="flex:1" onclick="endGroup()">⊗ End Group</button>
       </div>
     </div>
 
@@ -248,7 +248,6 @@ input::placeholder, textarea::placeholder { color:var(--text-muted); opacity:1; 
     <div class="sq-grid" id="editor-grid"></div>
     <div style="display:flex;gap:10px;flex-wrap:wrap">
       <button class="btn btn-amber btn-full" id="btn-save-activate" onclick="saveGame(true)">Save &amp; Activate 🎯</button>
-      <button class="btn btn-outline btn-full" onclick="saveGame(false)">Save as Draft</button>
       <button class="btn btn-outline btn-full" onclick="showDashboard()">Cancel</button>
     </div>
   </div>
@@ -506,11 +505,12 @@ function copyAdminLink() {
 function renderGamesList() {
   const c = document.getElementById('games-list');
   c.innerHTML = '';
-  if (allGames.length === 0) {
+  const visibleGames = allGames.filter(g => g.status !== 'setup');
+  if (visibleGames.length === 0) {
     c.innerHTML = '<div style="color:var(--text-muted);font-size:12px;letter-spacing:1px;margin-bottom:12px">No games yet. Create your first game above.</div>';
     return;
   }
-  allGames.forEach(g => {
+  visibleGames.forEach(g => {
     const card = document.createElement('div');
     card.id = `game-card-${g.id}`;
     card.className = 'game-card' + (g.status==='active' ? ' active-game' : '');
@@ -531,6 +531,7 @@ function renderGamesList() {
           : `<button class="btn btn-sm btn-danger" onclick="finishGame('${g.id}')">■ End Game</button>
              <button class="btn btn-sm btn-override" id="override-btn-${g.id}" onclick="showOverrideConfirm('${g.id}')">⚡ Override Check-in</button>`
         }
+        <button class="btn btn-sm btn-danger" onclick="deleteGame('${g.id}','${g.name.replace(/'/g,"\\'")}')">🗑 Delete</button>
       </div>
     `;
     c.appendChild(card);
@@ -554,6 +555,21 @@ function finishGame(gid) {
     borderColor: 'var(--red)',
     onConfirm: async () => {
       await db.from('games').update({ status: 'finished' }).eq('id', gid);
+      await loadGroup();
+    }
+  });
+}
+
+function deleteGame(gid, name) {
+  showConfirm({
+    icon: '🗑',
+    title: `Delete "${name}"?`,
+    body: 'This permanently removes the game, all its squares, marks, and scores. This cannot be undone.',
+    confirmText: 'Delete Game',
+    confirmClass: 'btn-danger',
+    borderColor: 'var(--red)',
+    onConfirm: async () => {
+      await db.from('games').delete().eq('id', gid);
       await loadGroup();
     }
   });
