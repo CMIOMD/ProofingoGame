@@ -165,6 +165,14 @@ body::before {
 .sb-first-diag { font-size:10px; letter-spacing:1px; color:var(--bg); background:#5ad4e8; padding:3px 7px; border-radius:2px; font-weight:900; white-space:nowrap; }
 .sb-peek-btn { display:block; margin-top:6px; padding:6px 12px; background:rgba(0,207,232,0.08); border:1.5px solid var(--amber-dim); border-radius:4px; color:var(--amber); font-family:var(--font); font-size:10px; font-weight:700; letter-spacing:1.5px; cursor:pointer; touch-action:manipulation; -webkit-tap-highlight-color:transparent; white-space:nowrap; transition:background .15s, border-color .15s; }
 .sb-peek-btn:active { background:rgba(0,207,232,0.18); border-color:var(--amber); }
+.sb-tabs { display:flex; gap:0; border-bottom:2px solid var(--border); overflow-x:auto; margin-bottom:14px; -webkit-overflow-scrolling:touch; }
+.sb-tab { padding:9px 14px; font-family:var(--font); font-size:10px; letter-spacing:2px; font-weight:700; text-transform:uppercase; cursor:pointer; color:var(--text-muted); background:none; border:none; border-bottom:2px solid transparent; margin-bottom:-2px; white-space:nowrap; transition:color .15s, border-color .15s; touch-action:manipulation; -webkit-tap-highlight-color:transparent; }
+.sb-tab.active { color:var(--amber); border-bottom-color:var(--amber); }
+.sb-tab:hover:not(.active) { color:var(--text); }
+.sb-right-wrap { display:flex; flex-direction:column; align-items:flex-end; gap:3px; flex-shrink:0; }
+.sb-bingo { font-size:10px; letter-spacing:1px; color:var(--bg); background:var(--amber); padding:3px 7px; border-radius:2px; font-weight:900; white-space:nowrap; }
+.sb-proof-count { display:inline-block; font-size:9px; letter-spacing:1px; color:var(--amber); margin-left:6px; opacity:0.8; }
+.sb-peek-count { font-size:9px; color:var(--text-muted); letter-spacing:0.5px; white-space:nowrap; }
 .peek-stats-section { max-width:520px; margin:0 auto; padding:0 10px calc(40px + env(safe-area-inset-bottom)); }
 .peek-stat-row { display:flex; align-items:center; gap:10px; padding:9px 12px; margin-bottom:6px; background:var(--bg2); border:2px solid var(--border); border-radius:5px; box-shadow:0 2px 8px rgba(0,0,0,0.3); }
 .peek-stat-name { font-size:13px; font-weight:700; color:var(--text); flex:1; display:flex; align-items:center; gap:6px; }
@@ -201,7 +209,7 @@ body::before {
 .game-checkin-roster { display:flex; flex-wrap:wrap; gap:6px 12px; margin-bottom:12px; }
 .game-checkin-item { display:flex; align-items:center; gap:4px; font-size:10px; letter-spacing:.5px; color:var(--text-muted); }
 .status-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; display:inline-block; }
-.status-legend { display:flex; gap:12px; flex-wrap:wrap; margin-bottom:8px; }
+.status-legend { display:flex; gap:12px; flex-wrap:wrap; margin-top:10px; padding-top:8px; border-top:1px solid var(--border); }
 .status-legend span { display:flex; align-items:center; gap:5px; font-size:9px; letter-spacing:1px; color:var(--text-muted); }
 .lobby-game-name { font-size:15px; font-weight:700; color:var(--text); margin-bottom:6px; }
 .lobby-badge { display:inline-block; font-size:9px; letter-spacing:2px; padding:3px 8px; border-radius:2px; font-weight:900; text-transform:uppercase; margin-bottom:14px; }
@@ -338,6 +346,11 @@ body::before {
     <div id="lobby-players"></div>
     <div class="lobby-slabel">Games</div>
     <div id="lobby-game-status"></div>
+    <div id="lobby-scores-section" style="display:none">
+      <div class="lobby-slabel" style="margin-top:24px">Live Scores — <span id="lobby-sb-game-name" style="color:var(--amber)"></span></div>
+      <div id="lobby-sb-tabs" class="sb-tabs" style="display:none"></div>
+      <div id="lobby-scoreboard"></div>
+    </div>
   </div>
 </div>
 
@@ -501,6 +514,13 @@ let peekCounts          = {};
 let commentsByGame      = {};
 let threadOverlayGameId = null;
 let unreadByGame        = {};
+let lobbyMarks          = {};
+let lobbyBingos         = {};
+let lobbyFirstStraight  = {};
+let lobbyFirstDiag      = {};
+let lobbyProofCounts    = {};
+let lobbyPeekCounts     = {};
+let lobbyScoreGameId    = null;
 
 // ================================================================
 // SESSION STORAGE — multi-group, multi-admin support
@@ -667,7 +687,10 @@ async function showLobby() {
   renderLobbyPlayers();
   renderLobbyGames(games || []);
 
-  await loadComments(games || []);
+  await Promise.all([
+    loadLobbyScores(games || []),
+    loadComments(games || [])
+  ]);
   hideLoading();
   subscribeRealtime();
   document.getElementById('screen-lobby').classList.add('show');
@@ -734,12 +757,12 @@ function renderLobbyGames(games) {
       card.innerHTML = `
         <div class="lobby-game-name">${game.name}</div>
         <div><span class="lobby-badge lobby-badge-active">● ACTIVE</span></div>
+        <div class="game-checkin-roster">${rosterHtml}</div>
         <div class="status-legend">
           <span><span class="status-dot" style="background:#e87070"></span>Invited</span>
           <span><span class="status-dot" style="background:#5ad4e8"></span>Checked in</span>
           <span><span class="status-dot" style="background:#7ee87a"></span>Active</span>
         </div>
-        <div class="game-checkin-roster">${rosterHtml}</div>
         <button class="lobby-checkin-btn" id="checkin-btn-${game.id}" ${iCheckedIn ? 'disabled' : ''} onclick="checkIn('${game.id}')">
           ${iCheckedIn ? "✓ YOU'RE CHECKED IN" : "I'M READY! ✓"}
         </button>
@@ -761,6 +784,124 @@ function renderLobbyGames(games) {
 
     c.appendChild(card);
   });
+}
+
+async function loadLobbyScores(games) {
+  const activeGames = games.filter(g => g.status === 'active');
+  const section = document.getElementById('lobby-scores-section');
+  if (!section) return;
+  if (activeGames.length === 0) { section.style.display = 'none'; return; }
+  if (!lobbyScoreGameId || !activeGames.find(g => g.id === lobbyScoreGameId)) {
+    lobbyScoreGameId = activeGames[0].id;
+  }
+  for (const g of activeGames) {
+    const [
+      { data: markData },
+      { data: bingoData },
+      { data: fleRows },
+      { data: proofRows },
+      { data: peekRows }
+    ] = await Promise.all([
+      db.from('marks').select('player_id,position').eq('game_id', g.id),
+      db.from('bingo_events').select('player_id').eq('game_id', g.id),
+      db.from('first_line_events').select('player_id,line_type,created_at').eq('game_id', g.id).order('created_at', { ascending: true }),
+      db.from('proofs').select('player_id').eq('game_id', g.id),
+      db.from('peek_events').select('peeked_id').eq('game_id', g.id)
+    ]);
+    lobbyMarks[g.id] = {};
+    allPlayers.forEach(p => { lobbyMarks[g.id][p.id] = new Set(); });
+    (markData || []).forEach(m => {
+      if (!lobbyMarks[g.id][m.player_id]) lobbyMarks[g.id][m.player_id] = new Set();
+      lobbyMarks[g.id][m.player_id].add(m.position);
+    });
+    lobbyBingos[g.id] = new Set((bingoData || []).map(b => b.player_id));
+    lobbyFirstStraight[g.id] = null;
+    lobbyFirstDiag[g.id]     = null;
+    for (const row of (fleRows || [])) {
+      if (row.line_type === 'straight' && !lobbyFirstStraight[g.id]) lobbyFirstStraight[g.id] = row.player_id;
+      if (row.line_type === 'diagonal' && !lobbyFirstDiag[g.id])     lobbyFirstDiag[g.id]     = row.player_id;
+    }
+    lobbyProofCounts[g.id] = {};
+    (proofRows || []).forEach(r => { lobbyProofCounts[g.id][r.player_id] = (lobbyProofCounts[g.id][r.player_id] || 0) + 1; });
+    lobbyPeekCounts[g.id] = {};
+    (peekRows || []).forEach(r => { lobbyPeekCounts[g.id][r.peeked_id] = (lobbyPeekCounts[g.id][r.peeked_id] || 0) + 1; });
+  }
+  renderLobbyScoreSection(activeGames);
+}
+
+function renderLobbyScoreSection(activeGames) {
+  const section = document.getElementById('lobby-scores-section');
+  if (!section || !activeGames || activeGames.length === 0) { if (section) section.style.display = 'none'; return; }
+  section.style.display = 'block';
+  const activeGame = activeGames.find(g => g.id === lobbyScoreGameId) || activeGames[0];
+  lobbyScoreGameId = activeGame.id;
+  document.getElementById('lobby-sb-game-name').textContent = activeGame.name;
+  const tabsEl = document.getElementById('lobby-sb-tabs');
+  if (activeGames.length > 1) {
+    tabsEl.style.display = 'flex';
+    tabsEl.innerHTML = activeGames.map(g =>
+      `<button class="sb-tab${g.id === lobbyScoreGameId ? ' active' : ''}" onclick="switchLobbyScoreGame('${g.id}')">${g.name}</button>`
+    ).join('');
+  } else {
+    tabsEl.style.display = 'none';
+  }
+  renderLobbyScoreboard();
+}
+
+function renderLobbyScoreboard() {
+  const c = document.getElementById('lobby-scoreboard');
+  if (!c || !lobbyScoreGameId) return;
+  c.innerHTML = '';
+  const gid          = lobbyScoreGameId;
+  const marks        = lobbyMarks[gid]        || {};
+  const bingos       = lobbyBingos[gid]       || new Set();
+  const firstStr     = lobbyFirstStraight[gid]|| null;
+  const firstDg      = lobbyFirstDiag[gid]    || null;
+  const proofCounts  = lobbyProofCounts[gid]  || {};
+  const peekCounts   = lobbyPeekCounts[gid]   || {};
+  const sorted = [...allPlayers].sort((a, b) => {
+    const ab = (marks[a.id]||new Set()).size === 9;
+    const bb = (marks[b.id]||new Set()).size === 9;
+    if (ab && !bb) return -1; if (!ab && bb) return 1;
+    return (marks[b.id]||new Set()).size - (marks[a.id]||new Set()).size;
+  });
+  sorted.forEach(p => {
+    const pmarks     = marks[p.id] || new Set();
+    const count      = pmarks.size;
+    const bingo      = bingos.has(p.id);
+    const pct        = Math.round(count / 9 * 100);
+    const firstLine  = !bingo && p.id === firstStr;
+    const firstDiagW = !bingo && !firstLine && p.id === firstDg;
+    const proofCount = proofCounts[p.id] || 0;
+    const peekCount  = peekCounts[p.id]  || 0;
+    const rightBadge = bingo
+      ? '<div class="sb-bingo">PROOFINGO 🎯</div>'
+      : firstLine
+        ? '<div class="sb-first-line">1ST LINE 🏁</div>'
+        : firstDiagW
+          ? '<div class="sb-first-diag">1ST DIAG ⚡</div>'
+          : `<div class="sb-count">${count}/9</div>`;
+    const proofBadge = proofCount > 0 ? `<span class="sb-proof-count">📝 ${proofCount}</span>` : '';
+    const peekBadge  = peekCount  > 0 ? `<div class="sb-peek-count">👁 ${peekCount} peek${peekCount !== 1 ? 's' : ''}</div>` : '';
+    const row = document.createElement('div');
+    row.className = 'sb-row' + (bingo ? ' has-bingo' : '');
+    row.innerHTML = `
+      <div class="sb-dot" style="background:${p.color}"></div>
+      <div class="sb-name">${p.name}${proofBadge}</div>
+      <div class="sb-bar-bg"><div class="sb-bar-fill${bingo ? ' bingo-fill' : ''}" style="width:${pct}%"></div></div>
+      <div class="sb-right-wrap">${rightBadge}${peekBadge}</div>
+    `;
+    c.appendChild(row);
+  });
+}
+
+async function switchLobbyScoreGame(gid) {
+  lobbyScoreGameId = gid;
+  const { data: games } = await db.from('games').select('*')
+    .eq('group_id', groupId).neq('status', 'finished')
+    .order('created_at', { ascending: true });
+  const activeGames = (games || []).filter(g => g.status === 'active');
+  renderLobbyScoreSection(activeGames);
 }
 
 async function enterLobbyGame(gid) {
@@ -1548,27 +1689,45 @@ function subscribeRealtime() {
     .on('postgres_changes', {
       event: '*', schema: 'public', table: 'marks'
     }, payload => {
-      if (!gameId) return;
       const { eventType, new: n, old: o } = payload;
       const pid = (n&&n.player_id)||(o&&o.player_id);
       const gid = (n&&n.game_id)||(o&&o.game_id);
-      if (gid !== gameId || pid === playerId) return;
-      if (!allMarks[pid]) allMarks[pid] = new Set();
-      if (eventType==='INSERT') allMarks[pid].add(n.position);
-      if (eventType==='DELETE') allMarks[pid].delete(o.position);
-      renderScoreboard();
+      if (gameId && gid === gameId && pid !== playerId) {
+        if (!allMarks[pid]) allMarks[pid] = new Set();
+        if (eventType==='INSERT') allMarks[pid].add(n.position);
+        if (eventType==='DELETE') allMarks[pid].delete(o.position);
+        renderScoreboard();
+      }
+      if (!gameId && document.getElementById('screen-lobby').classList.contains('show')) {
+        if (!lobbyMarks[gid]) lobbyMarks[gid] = {};
+        if (!lobbyMarks[gid][pid]) lobbyMarks[gid][pid] = new Set();
+        if (eventType==='INSERT') {
+          lobbyMarks[gid][pid].add(n.position);
+          if (!gameActivePlayers[gid]) gameActivePlayers[gid] = new Set();
+          gameActivePlayers[gid].add(pid);
+        }
+        if (eventType==='DELETE') lobbyMarks[gid][pid].delete(o.position);
+        if (gid === lobbyScoreGameId) renderLobbyScoreboard();
+      }
     })
 
     .on('postgres_changes', {
       event: 'INSERT', schema: 'public', table: 'bingo_events'
     }, payload => {
       const evt = payload.new;
-      if (!evt || !gameId) return;
-      if (evt.game_id !== gameId) return;
-      if (!seenBingos.has(evt.player_id)) {
-        seenBingos.add(evt.player_id);
-        showBingoOverlay(evt.player_name);
-        renderScoreboard();
+      if (!evt) return;
+      if (gameId && evt.game_id === gameId) {
+        if (!seenBingos.has(evt.player_id)) {
+          seenBingos.add(evt.player_id);
+          showBingoOverlay(evt.player_name);
+          renderScoreboard();
+        }
+        return;
+      }
+      if (!gameId && document.getElementById('screen-lobby').classList.contains('show')) {
+        if (!lobbyBingos[evt.game_id]) lobbyBingos[evt.game_id] = new Set();
+        lobbyBingos[evt.game_id].add(evt.player_id);
+        if (evt.game_id === lobbyScoreGameId) renderLobbyScoreboard();
       }
     })
 
@@ -1576,10 +1735,18 @@ function subscribeRealtime() {
       event: 'INSERT', schema: 'public', table: 'first_line_events'
     }, payload => {
       const evt = payload.new;
-      if (!evt || evt.game_id !== gameId) return;
-      if (evt.line_type === 'straight' && !firstStraightWinnerId) firstStraightWinnerId = evt.player_id;
-      if (evt.line_type === 'diagonal' && !firstDiagWinnerId) firstDiagWinnerId = evt.player_id;
-      renderScoreboard();
+      if (!evt) return;
+      if (gameId && evt.game_id === gameId) {
+        if (evt.line_type === 'straight' && !firstStraightWinnerId) firstStraightWinnerId = evt.player_id;
+        if (evt.line_type === 'diagonal' && !firstDiagWinnerId) firstDiagWinnerId = evt.player_id;
+        renderScoreboard();
+        return;
+      }
+      if (!gameId && document.getElementById('screen-lobby').classList.contains('show')) {
+        if (evt.line_type === 'straight' && !lobbyFirstStraight[evt.game_id]) lobbyFirstStraight[evt.game_id] = evt.player_id;
+        if (evt.line_type === 'diagonal' && !lobbyFirstDiag[evt.game_id])     lobbyFirstDiag[evt.game_id]     = evt.player_id;
+        if (evt.game_id === lobbyScoreGameId) renderLobbyScoreboard();
+      }
     })
 
     .on('postgres_changes', {
@@ -1650,7 +1817,7 @@ function subscribeRealtime() {
       commentsByGame[cm.game_id].unshift(cm);
       if (threadOverlayGameId === cm.game_id) {
         renderThread(cm.game_id);
-      } else if (cm.player_id !== playerId) {
+      } else {
         unreadByGame[cm.game_id] = (unreadByGame[cm.game_id] || 0) + 1;
         updateThreadBadge(cm.game_id);
       }
