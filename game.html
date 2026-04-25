@@ -199,9 +199,10 @@ body::before {
 .lobby-game-card { background:var(--bg2); border:2px solid var(--border); border-radius:5px; padding:16px; box-shadow:0 4px 16px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.04); margin-bottom:12px; }
 .lobby-game-card.is-active { border-color:var(--amber); box-shadow:0 4px 20px rgba(0,0,0,0.45), 0 0 16px rgba(0,207,232,0.2), inset 0 1px 0 rgba(255,255,255,0.06); }
 .game-checkin-roster { display:flex; flex-wrap:wrap; gap:6px 12px; margin-bottom:12px; }
-.game-checkin-item { display:flex; align-items:center; gap:4px; font-size:10px; letter-spacing:.5px; }
-.game-checkin-item.ready { color:#7ee87a; }
-.game-checkin-item.waiting { color:var(--text-muted); }
+.game-checkin-item { display:flex; align-items:center; gap:4px; font-size:10px; letter-spacing:.5px; color:var(--text-muted); }
+.status-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; display:inline-block; }
+.status-legend { display:flex; gap:12px; flex-wrap:wrap; margin-bottom:8px; }
+.status-legend span { display:flex; align-items:center; gap:5px; font-size:9px; letter-spacing:1px; color:var(--text-muted); }
 .lobby-game-name { font-size:15px; font-weight:700; color:var(--text); margin-bottom:6px; }
 .lobby-badge { display:inline-block; font-size:9px; letter-spacing:2px; padding:3px 8px; border-radius:2px; font-weight:900; text-transform:uppercase; margin-bottom:14px; }
 .lobby-badge-active { background:var(--amber); color:var(--bg); }
@@ -222,15 +223,19 @@ body::before {
 .comment-input { flex:1; padding:10px 12px; background:var(--bg2); border:2px solid var(--border); border-radius:4px; color:var(--text); font-family:var(--font); font-size:14px; outline:none; transition:border-color .15s; -webkit-appearance:none; }
 .comment-input:focus { border-color:var(--amber-dim); }
 .comment-send-btn { padding:10px 14px; background:var(--amber); color:var(--bg); border:none; border-radius:4px; font-family:var(--font); font-size:10px; font-weight:900; letter-spacing:2px; cursor:pointer; touch-action:manipulation; -webkit-tap-highlight-color:transparent; flex-shrink:0; }
-.game-thread-pair { display:flex; flex-direction:column; gap:10px; margin-bottom:16px; }
-@media (min-width:560px) {
-  .game-thread-pair { flex-direction:row; align-items:start; }
-  .game-thread-pair .lobby-game-card { flex:1; min-width:0; }
-  .game-thread-card { flex:1; min-width:0; }
-}
-.game-thread-card { background:var(--bg2); border:2px solid var(--border); border-radius:5px; padding:14px; }
-.game-thread-label { font-size:10px; letter-spacing:3px; color:var(--text-muted); text-transform:uppercase; margin-bottom:10px; }
-.per-game-thread { display:flex; flex-direction:column; gap:8px; height:min(220px,28dvh); overflow-y:scroll; -webkit-overflow-scrolling:touch; overscroll-behavior-y:contain; touch-action:pan-y; padding-right:2px; }
+/* Thread button on game card */
+.lobby-thread-btn { display:flex; align-items:center; gap:8px; width:100%; margin-top:10px; padding:10px 14px; background:rgba(0,207,232,0.06); color:var(--amber); border:1.5px solid var(--amber-dim); border-radius:4px; font-family:var(--font); font-size:10px; font-weight:700; letter-spacing:2px; cursor:pointer; touch-action:manipulation; -webkit-tap-highlight-color:transparent; transition:background .15s, border-color .15s; }
+.lobby-thread-btn:hover { background:rgba(0,207,232,0.14); border-color:var(--amber); }
+.thread-unread-dot { display:inline-flex; align-items:center; justify-content:center; min-width:18px; height:18px; padding:0 5px; background:var(--amber); color:var(--bg); border-radius:9px; font-size:9px; font-weight:900; letter-spacing:0; margin-left:auto; }
+
+/* Thread overlay */
+#thread-overlay { display:none; position:fixed; inset:0; z-index:95; background:var(--bg); flex-direction:column; }
+#thread-overlay.show { display:flex; }
+.thread-bar { display:flex; align-items:center; gap:12px; padding:calc(10px + env(safe-area-inset-top)) 14px 10px; border-bottom:1px solid var(--border); background:rgba(12,17,24,0.96); backdrop-filter:blur(8px); flex-shrink:0; }
+.thread-close { background:none; border:none; color:var(--text-muted); font-size:20px; cursor:pointer; padding:4px 8px 4px 0; line-height:1; touch-action:manipulation; -webkit-tap-highlight-color:transparent; flex-shrink:0; }
+.thread-bar-title { font-size:13px; font-weight:900; color:var(--amber); letter-spacing:0.5px; flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.thread-list { flex:1; overflow-y:scroll; -webkit-overflow-scrolling:touch; overscroll-behavior-y:contain; display:flex; flex-direction:column; gap:8px; padding:14px 14px 8px; }
+.thread-input-bar { flex-shrink:0; padding:10px 14px calc(10px + env(safe-area-inset-bottom)); border-top:1px solid var(--border); background:var(--bg); }
 .thread-entry { background:var(--bg2); border:2px solid var(--border); border-radius:4px; padding:10px 12px; }
 .thread-meta { display:flex; align-items:center; gap:7px; margin-bottom:5px; flex-wrap:wrap; }
 .thread-dot { width:9px; height:9px; border-radius:50%; flex-shrink:0; }
@@ -379,6 +384,23 @@ body::before {
   </div>
 </div>
 
+<!-- Thread overlay -->
+<div id="thread-overlay">
+  <div class="thread-bar">
+    <button class="thread-close" onclick="closeThread()">✕</button>
+    <div class="thread-bar-title">💬 <span id="thread-overlay-game-name"></span></div>
+  </div>
+  <div id="thread-list" class="thread-list"></div>
+  <div class="thread-input-bar">
+    <div class="comment-input-wrap" style="margin-bottom:0">
+      <input type="text" id="thread-overlay-input" class="comment-input"
+        placeholder="Say something… (85 chars)" maxlength="85"
+        onkeydown="if(event.key==='Enter')postComment(false,threadOverlayGameId)">
+      <button class="comment-send-btn" onclick="postComment(false,threadOverlayGameId)">POST</button>
+    </div>
+  </div>
+</div>
+
 <!-- Bingo overlay -->
 <div id="bingo-overlay">
   <div class="overlay-emoji">🎯</div>
@@ -461,6 +483,7 @@ let allMarks    = {};
 let squares     = Array(9).fill('');
 let seenBingos          = new Set();
 let gameCheckedInIds    = {};
+let gameActivePlayers   = {};
 let firstStraightWinnerId = null;
 let firstDiagWinnerId     = null;
 let channel             = null;
@@ -476,6 +499,8 @@ let peekMarks           = new Set();
 let peekSubmittedProofs = new Set();
 let peekCounts          = {};
 let commentsByGame      = {};
+let threadOverlayGameId = null;
+let unreadByGame        = {};
 
 // ================================================================
 // SESSION STORAGE — multi-group, multi-admin support
@@ -628,10 +653,15 @@ async function showLobby() {
     .order('created_at', { ascending: true });
 
   gameCheckedInIds = {};
+  gameActivePlayers = {};
   for (const g of (games || [])) {
     if (g.status === 'active') {
-      const { data: ciRows } = await db.from('check_ins').select('player_id').eq('game_id', g.id);
-      gameCheckedInIds[g.id] = new Set((ciRows || []).map(r => r.player_id));
+      const [{ data: ciRows }, { data: markRows }] = await Promise.all([
+        db.from('check_ins').select('player_id').eq('game_id', g.id),
+        db.from('marks').select('player_id').eq('game_id', g.id)
+      ]);
+      gameCheckedInIds[g.id]  = new Set((ciRows  || []).map(r => r.player_id));
+      gameActivePlayers[g.id] = new Set((markRows || []).map(r => r.player_id));
     }
   }
   renderLobbyPlayers();
@@ -675,8 +705,12 @@ function renderLobbyGames(games) {
   }
 
   games.forEach(game => {
-    const pair = document.createElement('div');
-    pair.className = 'game-thread-pair';
+    const safeName = game.name.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+    const unread = unreadByGame[game.id] || 0;
+    const threadBtnHtml = `
+      <button id="thread-btn-${game.id}" class="lobby-thread-btn" onclick="openThread('${game.id}','${safeName}')">
+        💬 Thread${unread > 0 ? `<span class="thread-unread-dot">${unread}</span>` : ''}
+      </button>`;
 
     const card = document.createElement('div');
     if (game.status === 'active') {
@@ -684,13 +718,15 @@ function renderLobbyGames(games) {
       const allReady = allPlayers.length > 0 && allPlayers.every(p => ciSet.has(p.id));
       const iCheckedIn = ciSet.has(playerId);
 
+      const activeSet = gameActivePlayers[game.id] || new Set();
       const rosterHtml = allPlayers.map(p => {
-        const ready = ciSet.has(p.id);
+        const isActive = activeSet.has(p.id);
+        const isReady  = ciSet.has(p.id);
+        const dotColor = isActive ? '#7ee87a' : isReady ? '#5ad4e8' : '#e87070';
         const isYou = p.id === playerId;
-        return `<div class="game-checkin-item${ready ? ' ready' : ' waiting'}">
-          <div style="width:8px;height:8px;border-radius:50%;background:${p.color};flex-shrink:0"></div>
+        return `<div class="game-checkin-item">
+          <div class="status-dot" style="background:${dotColor}"></div>
           <span>${p.name}${isYou ? ' (you)' : ''}</span>
-          ${ready ? '<span>✓</span>' : ''}
         </div>`;
       }).join('');
 
@@ -698,6 +734,11 @@ function renderLobbyGames(games) {
       card.innerHTML = `
         <div class="lobby-game-name">${game.name}</div>
         <div><span class="lobby-badge lobby-badge-active">● ACTIVE</span></div>
+        <div class="status-legend">
+          <span><span class="status-dot" style="background:#e87070"></span>Invited</span>
+          <span><span class="status-dot" style="background:#5ad4e8"></span>Checked in</span>
+          <span><span class="status-dot" style="background:#7ee87a"></span>Active</span>
+        </div>
         <div class="game-checkin-roster">${rosterHtml}</div>
         <button class="lobby-checkin-btn" id="checkin-btn-${game.id}" ${iCheckedIn ? 'disabled' : ''} onclick="checkIn('${game.id}')">
           ${iCheckedIn ? "✓ YOU'RE CHECKED IN" : "I'M READY! ✓"}
@@ -706,6 +747,7 @@ function renderLobbyGames(games) {
           ${allReady ? 'Enter Game →' : 'Waiting for all players to check in...'}
         </button>
         ${!allReady ? '<div class="lobby-waiting-msg" style="padding-top:10px">Give your friends a little nudge to get this game going! 👋</div>' : ''}
+        ${threadBtnHtml}
       `;
     } else {
       card.className = 'lobby-game-card';
@@ -713,25 +755,11 @@ function renderLobbyGames(games) {
         <div class="lobby-game-name">${game.name}</div>
         <div><span class="lobby-badge lobby-badge-setup">SETUP — WAITING TO ACTIVATE</span></div>
         <div class="lobby-waiting-msg" style="padding-top:8px">The admin will start this game soon.</div>
+        ${threadBtnHtml}
       `;
     }
 
-    const threadCard = document.createElement('div');
-    threadCard.className = 'game-thread-card';
-    threadCard.innerHTML = `
-      <div class="game-thread-label">💬 Thread</div>
-      <div class="comment-input-wrap">
-        <input type="text" id="comment-input-${game.id}" class="comment-input"
-          placeholder="Say something… (85 chars)" maxlength="85"
-          onkeydown="if(event.key==='Enter')postComment(false,'${game.id}')">
-        <button class="comment-send-btn" onclick="postComment(false,'${game.id}')">POST</button>
-      </div>
-      <div id="thread-${game.id}" class="per-game-thread"></div>
-    `;
-
-    pair.appendChild(card);
-    pair.appendChild(threadCard);
-    c.appendChild(pair);
+    c.appendChild(card);
   });
 }
 
@@ -758,9 +786,40 @@ async function checkIn(gid) {
 }
 
 function renderAllThreads() {
-  document.querySelectorAll('[id^="thread-"]').forEach(el => {
-    renderThread(el.id.replace('thread-', ''));
-  });
+  if (threadOverlayGameId) renderThread(threadOverlayGameId);
+}
+
+function updateThreadBadge(gid) {
+  const btn = document.getElementById(`thread-btn-${gid}`);
+  if (!btn) return;
+  const unread = unreadByGame[gid] || 0;
+  const dot = btn.querySelector('.thread-unread-dot');
+  if (unread > 0) {
+    if (dot) { dot.textContent = unread; }
+    else { btn.insertAdjacentHTML('beforeend', `<span class="thread-unread-dot">${unread}</span>`); }
+  } else {
+    if (dot) dot.remove();
+  }
+}
+
+function openThread(gid, gameName) {
+  threadOverlayGameId = gid;
+  unreadByGame[gid] = 0;
+  updateThreadBadge(gid);
+  document.getElementById('thread-overlay-game-name').textContent = gameName;
+  document.getElementById('thread-overlay').classList.add('show');
+  renderThread(gid);
+  setTimeout(() => {
+    const input = document.getElementById('thread-overlay-input');
+    if (input) input.focus();
+  }, 80);
+}
+
+function closeThread() {
+  document.getElementById('thread-overlay').classList.remove('show');
+  const inp = document.getElementById('thread-overlay-input');
+  if (inp) inp.value = '';
+  threadOverlayGameId = null;
 }
 
 // ================================================================
@@ -1254,7 +1313,8 @@ async function loadComments(games) {
 }
 
 function renderThread(gid) {
-  const c = document.getElementById(`thread-${gid}`);
+  if (threadOverlayGameId !== gid) return;
+  const c = document.getElementById('thread-list');
   if (!c) return;
   c.innerHTML = '';
   const cms = commentsByGame[gid] || [];
@@ -1285,7 +1345,7 @@ function renderThread(gid) {
 
 async function postComment(fromPeek, gid) {
   const targetGameId = fromPeek ? gameId : gid;
-  const inputId = fromPeek ? 'peek-comment-input' : `comment-input-${gid}`;
+  const inputId = fromPeek ? 'peek-comment-input' : 'thread-overlay-input';
   const input   = document.getElementById(inputId);
   if (!input) return;
   const body = input.value.trim().slice(0, 85);
@@ -1588,7 +1648,12 @@ function subscribeRealtime() {
       if ((commentsByGame[cm.game_id] || []).some(c => c.id === cm.id)) return;
       if (!commentsByGame[cm.game_id]) commentsByGame[cm.game_id] = [];
       commentsByGame[cm.game_id].unshift(cm);
-      renderThread(cm.game_id);
+      if (threadOverlayGameId === cm.game_id) {
+        renderThread(cm.game_id);
+      } else if (cm.player_id !== playerId) {
+        unreadByGame[cm.game_id] = (unreadByGame[cm.game_id] || 0) + 1;
+        updateThreadBadge(cm.game_id);
+      }
     })
 
     .subscribe();
