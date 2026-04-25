@@ -49,10 +49,10 @@ body::before {
 .resume-input::placeholder { color: #7a8fa8; opacity: 1; }
 .resume-btn { padding: 12px 16px; background: transparent; border: 2px solid #1e2d40; border-radius: 4px; color: #00cfe8; font-family: 'Courier New', Courier, monospace; font-size: 11px; font-weight: 700; cursor: pointer; letter-spacing: 2px; white-space: nowrap; touch-action: manipulation; }
 .resume-btn:hover { border-color: #00cfe8; }
-.footer { margin-top: 40px; font-size: 13px; color: #eef2f6; letter-spacing: 1px; text-align: center; line-height: 2.2; }
+.footer { margin-top: 40px; font-size: 10px; color: #7a8fa8; letter-spacing: 1px; text-align: center; line-height: 2; }
 .footer strong { color: #eef2f6; }
-.footer-cup { font-size: 32px; vertical-align: middle; line-height: 1; }
-.footer-stethoscope { font-size: 32px; cursor: pointer; display: inline-block; position: relative; vertical-align: middle; user-select: none; -webkit-tap-highlight-color: transparent; transition: transform .15s; }
+.footer-cup { font-size: 16px; vertical-align: middle; line-height: 1; }
+.footer-stethoscope { font-size: 16px; cursor: pointer; display: inline-block; position: relative; vertical-align: middle; user-select: none; -webkit-tap-highlight-color: transparent; transition: transform .15s; }
 .footer-stethoscope:hover { transform: scale(1.2); }
 .footer-stethoscope .dr-label { display: none; position: absolute; bottom: 130%; left: 50%; transform: translateX(-50%); background: #1a2232; border: 1.5px solid #00cfe8; border-radius: 6px; padding: 4px 10px; font-size: 10px; font-family: 'Courier New', Courier, monospace; color: #00cfe8; white-space: nowrap; letter-spacing: 2px; box-shadow: 0 4px 14px rgba(0,0,0,0.5); pointer-events: none; }
 .footer-stethoscope .dr-label::after { content: ''; position: absolute; top: 100%; left: 50%; transform: translateX(-50%); border: 5px solid transparent; border-top-color: #00cfe8; }
@@ -83,8 +83,7 @@ body::before {
   <div class="error" id="resume-error"></div>
 
   <div class="footer">
-    Created under the influence of <strong>A LOT</strong> of <span class="footer-cup">☕</span><br>
-    by a <span class="footer-stethoscope" onclick="this.classList.toggle('revealed')" title="Who made this?">🩺<span class="dr-label">Dr. Garniss</span></span>
+    Created by a <span class="footer-stethoscope" onclick="this.classList.toggle('revealed')" title="Who made this?">🩺<span class="dr-label">Dr. Garniss</span></span> under the influence of a lot of <span class="footer-cup">☕</span>
   </div>
 </div>
 <script>
