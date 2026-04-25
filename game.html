@@ -163,6 +163,27 @@ body::before {
 .sb-bingo-badge { font-size:10px; letter-spacing:1px; color:var(--bg); background:var(--amber); padding:3px 7px; border-radius:2px; font-weight:900; white-space:nowrap; }
 .sb-first-line { font-size:10px; letter-spacing:1px; color:var(--bg); background:#7a8fa8; padding:3px 7px; border-radius:2px; font-weight:900; white-space:nowrap; }
 .sb-first-diag { font-size:10px; letter-spacing:1px; color:var(--bg); background:#5ad4e8; padding:3px 7px; border-radius:2px; font-weight:900; white-space:nowrap; }
+.sb-peek-btn { display:block; margin-top:6px; padding:6px 12px; background:rgba(0,207,232,0.08); border:1.5px solid var(--amber-dim); border-radius:4px; color:var(--amber); font-family:var(--font); font-size:10px; font-weight:700; letter-spacing:1.5px; cursor:pointer; touch-action:manipulation; -webkit-tap-highlight-color:transparent; white-space:nowrap; transition:background .15s, border-color .15s; }
+.sb-peek-btn:active { background:rgba(0,207,232,0.18); border-color:var(--amber); }
+.peek-stats-section { max-width:520px; margin:0 auto; padding:0 10px calc(40px + env(safe-area-inset-bottom)); }
+.peek-stat-row { display:flex; align-items:center; gap:10px; padding:9px 12px; margin-bottom:6px; background:var(--bg2); border:2px solid var(--border); border-radius:5px; box-shadow:0 2px 8px rgba(0,0,0,0.3); }
+.peek-stat-name { font-size:13px; font-weight:700; color:var(--text); flex:1; display:flex; align-items:center; gap:6px; }
+.peek-stat-count { font-size:10px; letter-spacing:1px; color:var(--text-muted); white-space:nowrap; }
+.peek-stat-count.has-peeks { color:var(--amber); font-weight:700; }
+
+/* Peek overlay */
+#peek-overlay { display:none; position:fixed; inset:0; z-index:95; background:var(--bg); overflow-y:auto; -webkit-overflow-scrolling:touch; }
+#peek-overlay.show { display:block; }
+.peek-bar { display:flex; align-items:center; gap:12px; padding:calc(10px + env(safe-area-inset-top)) 14px 10px; border-bottom:1px solid var(--border); background:rgba(12,17,24,0.96); position:sticky; top:0; z-index:10; backdrop-filter:blur(8px); }
+.peek-close { background:none; border:none; color:var(--text-muted); font-size:20px; cursor:pointer; padding:4px 8px 4px 0; line-height:1; touch-action:manipulation; -webkit-tap-highlight-color:transparent; flex-shrink:0; }
+.peek-title { font-size:13px; font-weight:900; color:var(--amber); letter-spacing:0.5px; }
+.peek-subtitle { font-size:9px; letter-spacing:2px; color:var(--text-muted); margin-left:auto; }
+.peek-heading { text-align:center; padding:20px 16px 4px; }
+.peek-heading-label { font-size:13px; letter-spacing:3px; color:var(--text-muted); text-transform:uppercase; margin-bottom:6px; }
+.peek-heading-name { font-size:clamp(22px,7vw,32px); font-weight:900; color:var(--amber); letter-spacing:-1px; }
+.peek-board-wrap { padding:10px 10px 4px; }
+.peek-cell { cursor:default !important; }
+.peek-cell.has-peek-proof { cursor:pointer !important; }
 
 /* ================================================================
    LOBBY SCREEN (player read-only group view)
@@ -196,6 +217,23 @@ body::before {
 .lobby-waiting-msg { font-size:12px; color:var(--text-muted); letter-spacing:1px; line-height:1.7; text-align:center; padding:20px 0 8px; }
 .lobby-pulse { display:flex; gap:8px; justify-content:center; margin-top:12px; }
 
+/* Comments / thread */
+.comment-input-wrap { display:flex; gap:8px; margin-bottom:10px; }
+.comment-input { flex:1; padding:10px 12px; background:var(--bg2); border:2px solid var(--border); border-radius:4px; color:var(--text); font-family:var(--font); font-size:14px; outline:none; transition:border-color .15s; -webkit-appearance:none; }
+.comment-input:focus { border-color:var(--amber-dim); }
+.comment-send-btn { padding:10px 14px; background:var(--amber); color:var(--bg); border:none; border-radius:4px; font-family:var(--font); font-size:10px; font-weight:900; letter-spacing:2px; cursor:pointer; touch-action:manipulation; -webkit-tap-highlight-color:transparent; flex-shrink:0; }
+.lobby-thread { display:flex; flex-direction:column; gap:8px; height:min(340px,38dvh); overflow-y:scroll; -webkit-overflow-scrolling:touch; overscroll-behavior-y:contain; touch-action:pan-y; padding-right:2px; }
+.thread-entry { background:var(--bg2); border:2px solid var(--border); border-radius:4px; padding:10px 12px; }
+.thread-meta { display:flex; align-items:center; gap:7px; margin-bottom:5px; flex-wrap:wrap; }
+.thread-dot { width:9px; height:9px; border-radius:50%; flex-shrink:0; }
+.thread-author { font-size:11px; font-weight:700; color:var(--text); }
+.thread-time { font-size:9px; color:var(--text-muted); letter-spacing:1px; margin-left:auto; white-space:nowrap; }
+.thread-peek-tag { font-size:8px; letter-spacing:0.5px; color:var(--amber); background:rgba(0,207,232,0.1); border:1px solid rgba(0,207,232,0.25); padding:2px 6px; border-radius:2px; white-space:nowrap; }
+.thread-body { font-size:13px; color:var(--text); line-height:1.45; word-break:break-word; }
+.thread-empty { font-size:11px; color:var(--text-muted); text-align:center; padding:14px 0; letter-spacing:1px; }
+.peek-comment-wrap { padding:14px 16px 20px; border-top:1px solid var(--border); margin-top:4px; }
+.peek-comment-label { font-size:10px; letter-spacing:3px; color:var(--text-muted); text-transform:uppercase; margin-bottom:8px; }
+
 /* Bingo overlay */
 #bingo-overlay {
   display:none; position:fixed; inset:0; z-index:100;
@@ -212,6 +250,32 @@ body::before {
 .overlay-name { font-size:clamp(22px,6vw,36px); font-weight:900; color:#fff; margin-bottom:32px; letter-spacing:-1px; }
 .overlay-dismiss { padding:14px 32px; background:transparent; color:var(--amber); border:2px solid var(--amber); border-radius:4px; font-family:var(--font); font-size:11px; font-weight:700; letter-spacing:3px; text-transform:uppercase; cursor:pointer; touch-action:manipulation; }
 .overlay-dismiss:hover { background:rgba(0,207,232,0.1); }
+
+/* Proof modal */
+#proof-modal { display:none; position:fixed; inset:0; z-index:110; align-items:center; justify-content:center; padding:24px; }
+#proof-modal.show { display:flex; }
+#proof-modal-backdrop { position:absolute; inset:0; background:rgba(8,14,22,0.92); backdrop-filter:blur(6px); }
+.proof-box { position:relative; z-index:1; background:var(--bg2); border:2px solid var(--amber-dim); border-radius:8px; padding:24px; max-width:360px; width:100%; box-shadow:0 16px 48px rgba(0,0,0,0.7); max-height:90vh; overflow-y:auto; }
+.proof-title { font-size:14px; font-weight:900; color:var(--amber); letter-spacing:1px; margin-bottom:8px; }
+.proof-square-label { font-size:12px; color:var(--text-muted); margin-bottom:14px; line-height:1.5; }
+.proof-box textarea { width:100%; padding:10px; background:var(--bg3); border:1px solid var(--border); border-radius:4px; color:var(--text); font-family:var(--font); font-size:13px; resize:none; outline:none; margin-bottom:14px; box-sizing:border-box; }
+.proof-box textarea[readonly] { opacity:0.8; }
+.proof-photo-btn { display:block; padding:12px; background:transparent; color:var(--amber); border:2px solid var(--amber); border-radius:4px; text-align:center; cursor:pointer; font-size:12px; font-weight:700; letter-spacing:2px; margin-bottom:8px; }
+.proof-actions { display:flex; gap:10px; margin-top:4px; }
+.proof-cancel-btn { flex:1; padding:12px; background:transparent; color:var(--text-muted); border:1px solid var(--border); border-radius:4px; font-family:var(--font); font-size:11px; font-weight:700; letter-spacing:2px; cursor:pointer; }
+.proof-submit-btn { flex:2; padding:12px; background:var(--amber); color:var(--bg); border:none; border-radius:4px; font-family:var(--font); font-size:11px; font-weight:900; letter-spacing:2px; cursor:pointer; }
+.proof-submit-btn:disabled { opacity:.4; cursor:not-allowed; }
+.proof-unmark-btn { flex:2; padding:12px; background:transparent; color:#e87070; border:1px solid #e87070; border-radius:4px; font-family:var(--font); font-size:11px; font-weight:700; letter-spacing:2px; cursor:pointer; }
+
+/* Proof hint bar */
+.proof-hint { font-size:clamp(9px,2.2vw,11px); letter-spacing:0.3px; color:var(--text-muted); padding:8px 12px; margin:4px auto; line-height:1.8; border-top:1px solid var(--border); max-width:400px; width:100%; box-sizing:border-box; }
+.proof-hint strong { color:var(--amber); }
+.proof-hint-row { display:flex; align-items:center; gap:6px; flex-wrap:nowrap; }
+.proof-hint-icon { font-size:clamp(13px,3.5vw,16px); line-height:1; flex-shrink:0; }
+
+/* Proof badge on cells */
+.cell-proof-badge { position:absolute; top:4px; right:4px; font-size:clamp(16px,4.5vw,22px); z-index:2; pointer-events:none; line-height:1; filter:drop-shadow(0 1px 2px rgba(0,0,0,0.7)); }
+.cell-proofed-badge { position:absolute; bottom:4px; left:0; right:0; text-align:center; font-size:clamp(8px,2vw,11px); font-weight:900; letter-spacing:1px; color:var(--amber); font-family:var(--font); z-index:2; pointer-events:none; }
 </style>
 </head>
 <body>
@@ -261,6 +325,14 @@ body::before {
     <div id="lobby-players"></div>
     <div class="lobby-slabel">Games</div>
     <div id="lobby-game-status"></div>
+    <div class="lobby-slabel" style="margin-top:24px">💬 Group Thread</div>
+    <div class="comment-input-wrap">
+      <input type="text" id="lobby-comment-input" class="comment-input"
+        placeholder="Say something… (85 chars)" maxlength="85"
+        onkeydown="if(event.key==='Enter')postComment(false)">
+      <button class="comment-send-btn" onclick="postComment(false)">POST</button>
+    </div>
+    <div id="lobby-thread" class="lobby-thread"></div>
   </div>
 </div>
 
@@ -282,6 +354,12 @@ body::before {
     <div class="grid" id="grid"></div>
   </div>
 
+  <div id="proof-hint" style="display:none" class="proof-hint">
+    <div class="proof-hint-row"><span class="proof-hint-icon">📝</span> Text proof required — tap to submit</div>
+    <div class="proof-hint-row"><span class="proof-hint-icon">📸</span> Photo proof required — tap to submit</div>
+    <div class="proof-hint-row"><span class="proof-hint-icon">✓</span> Tap <strong>PROOF ✓</strong> on a marked cell to view your proof</div>
+  </div>
+
   <div class="scoreboard">
     <div class="sb-header">
       <span>Live Scoreboard</span>
@@ -292,6 +370,13 @@ body::before {
     </div>
     <div id="sb-rows"></div>
   </div>
+
+  <div class="peek-stats-section" id="peek-stats-section" style="display:none">
+    <div class="sb-header" style="margin-top:8px">
+      <span>👁 WHO PEEKED AT YOUR BOARD</span>
+    </div>
+    <div id="peek-stats-rows"></div>
+  </div>
 </div>
 
 <!-- Bingo overlay -->
@@ -301,6 +386,63 @@ body::before {
   <div class="overlay-sub">WE HAVE A WINNER</div>
   <div class="overlay-name" id="overlay-winner"></div>
   <button class="overlay-dismiss" onclick="dismissOverlay()">Keep Playing</button>
+</div>
+
+<!-- Proof modal -->
+<div id="proof-modal">
+  <div id="proof-modal-backdrop" onclick="cancelProof()"></div>
+  <div class="proof-box">
+    <div class="proof-title" id="proof-modal-title">Show Your Proof</div>
+    <div class="proof-square-label" id="proof-square-label"></div>
+    <textarea id="proof-text-area" placeholder="Describe what happened..." rows="4"></textarea>
+    <div id="proof-photo-section" style="display:none">
+      <label for="proof-photo-input" class="proof-photo-btn" id="proof-photo-choose-btn">📷 Choose Photo</label>
+      <input type="file" id="proof-photo-input" accept="image/*" capture="environment" style="display:none">
+      <div id="proof-photo-preview"></div>
+    </div>
+    <div class="proof-actions">
+      <button class="proof-cancel-btn" id="proof-cancel-btn" onclick="cancelProof()">Cancel</button>
+      <button class="proof-submit-btn" id="proof-submit-btn" onclick="submitProof()">Submit Proof ✓</button>
+      <button class="proof-unmark-btn" id="proof-unmark-btn" style="display:none" onclick="confirmUnmarkWithProof(pendingUnmarkProofPos)">Unmark</button>
+    </div>
+  </div>
+</div>
+
+<!-- Peek overlay -->
+<div id="peek-overlay">
+  <div class="peek-bar">
+    <button class="peek-close" onclick="closePeek()">⟵</button>
+    <div>
+      <div class="peek-title">👁 <span id="peek-name"></span>'s Board</div>
+    </div>
+    <span class="peek-subtitle">READ ONLY</span>
+  </div>
+  <div class="peek-heading">
+    <div class="peek-heading-label">SNEAKING A PEEK AT</div>
+    <div class="peek-heading-name" id="peek-heading-name"></div>
+  </div>
+  <div class="peek-board-wrap">
+    <div class="grid" id="peek-grid"></div>
+  </div>
+  <div id="peek-proof-hint" style="display:none" class="proof-hint">
+    <div class="proof-hint-row"><span class="proof-hint-icon">📝</span> Text proof submitted — tap PROOF ✓ to view</div>
+    <div class="proof-hint-row"><span class="proof-hint-icon">📸</span> Photo proof submitted — tap PROOF ✓ to view</div>
+  </div>
+  <div class="peek-comment-wrap">
+    <div class="peek-comment-label">💬 Leave a comment</div>
+    <div class="comment-input-wrap">
+      <input type="text" id="peek-comment-input" class="comment-input"
+        placeholder="Say something… (85 chars)" maxlength="85"
+        onkeydown="if(event.key==='Enter')postComment(true)">
+      <button class="comment-send-btn" onclick="postComment(true)">POST</button>
+    </div>
+    <div style="font-size:9px;letter-spacing:1px;color:var(--text-muted);margin-top:4px">
+      Your comment will appear in the group thread tagged with this player's name.
+    </div>
+    <div id="peek-post-confirm" style="display:none;margin-top:10px;padding:10px 12px;background:rgba(0,207,232,0.1);border:1px solid var(--amber-dim);border-radius:4px;font-size:11px;letter-spacing:1px;color:var(--amber);line-height:1.5;">
+      ✓ Posted! View all comments in the game lobby.
+    </div>
+  </div>
 </div>
 
 <script>
@@ -325,6 +467,15 @@ let channel             = null;
 let gridBuilt           = false;
 let pendingUnmarkPos    = null;
 let pendingUnmarkTimer  = null;
+let squaresData         = Array(9).fill(null);
+let submittedProofs     = new Set();
+let pendingProofPos     = null;
+let pendingUnmarkProofPos = null;
+let peekPlayerId        = null;
+let peekMarks           = new Set();
+let peekSubmittedProofs = new Set();
+let peekCounts          = {};
+let comments            = [];
 
 // ================================================================
 // SESSION STORAGE — multi-group, multi-admin support
@@ -486,6 +637,7 @@ async function showLobby() {
   renderLobbyPlayers();
   renderLobbyGames(games || []);
 
+  await loadComments();
   hideLoading();
   subscribeRealtime();
   document.getElementById('screen-lobby').classList.add('show');
@@ -634,20 +786,31 @@ async function enterGame(game) {
   firstDiagWinnerId     = null;
   gameCheckedInIds      = {};
   gridBuilt             = false;
+  squaresData           = Array(9).fill(null);
+  submittedProofs       = new Set();
+  pendingProofPos       = null;
+  pendingUnmarkProofPos = null;
+  peekCounts            = {};
   clearPendingUnmark();
   allPlayers.forEach(p => { allMarks[p.id] = new Set(); });
 
   document.getElementById('tb-game-name').textContent = game.name;
 
   const { data: sqData } = await db.from('squares').select('*').eq('game_id', gameId);
-  squares = Array(9).fill('');
-  (sqData || []).forEach(s => { if (s.position < 9) squares[s.position] = s.text; });
+  squares     = Array(9).fill('');
+  squaresData = Array(9).fill(null);
+  (sqData || []).forEach(s => {
+    if (s.position < 9) { squares[s.position] = s.text; squaresData[s.position] = s; }
+  });
 
   const { data: markData } = await db.from('marks').select('*').eq('game_id', gameId);
   (markData || []).forEach(m => {
     if (allMarks[m.player_id]) allMarks[m.player_id].add(m.position);
   });
   myMarks = allMarks[playerId] || new Set();
+
+  const { data: proofData } = await db.from('proofs').select('position').eq('game_id', gameId).eq('player_id', playerId);
+  submittedProofs = new Set((proofData || []).map(p => p.position));
 
   const { data: bingoData } = await db.from('bingo_events').select('*').eq('game_id', gameId);
   (bingoData || []).forEach(b => seenBingos.add(b.player_id));
@@ -663,6 +826,7 @@ async function enterGame(game) {
 
   buildGrid();
   renderScoreboard();
+  loadPeekCounts();
   showGame();
 }
 
@@ -673,6 +837,9 @@ function buildGrid() {
   const grid = document.getElementById('grid');
   grid.innerHTML = '';
   gridBuilt = true;
+
+  const hasAnyProof = squaresData.some(sq => sq && sq.proof_required);
+  document.getElementById('proof-hint').style.display = hasAnyProof ? 'block' : 'none';
 
   const winPos = getWinningPositions(checkBingo(myMarks));
 
@@ -697,6 +864,21 @@ function buildGrid() {
     txt.textContent = squares[pos] || '';
     cell.appendChild(txt);
 
+    const sq = squaresData[pos];
+    if (sq && sq.proof_required) {
+      if (!myMarks.has(pos)) {
+        const badge = document.createElement('div');
+        badge.className = 'cell-proof-badge';
+        badge.textContent = sq.proof_type === 'photo' ? '📸' : '📝';
+        cell.appendChild(badge);
+      } else if (submittedProofs.has(pos)) {
+        const proofed = document.createElement('div');
+        proofed.className = 'cell-proofed-badge';
+        proofed.textContent = 'PROOF ✓';
+        cell.appendChild(proofed);
+      }
+    }
+
     cell.addEventListener('click', () => toggleMark(pos, cell));
     grid.appendChild(cell);
   }
@@ -713,6 +895,21 @@ function clearPendingUnmark() {
 
 async function toggleMark(pos, cell) {
   const wasMarked = myMarks.has(pos);
+  const sq = squaresData[pos];
+
+  // Marked proof-required cell → show view modal (not double-tap flow)
+  if (wasMarked && sq && sq.proof_required && submittedProofs.has(pos)) {
+    clearPendingUnmark();
+    showProofViewModal(pos, sq.proof_type, sq.text);
+    return;
+  }
+
+  // Unmarked proof-required cell with no proof → show submission modal
+  if (!wasMarked && sq && sq.proof_required && !submittedProofs.has(pos)) {
+    clearPendingUnmark();
+    showProofModal(pos, sq.proof_type, sq.text, false);
+    return;
+  }
 
   if (wasMarked) {
     if (pendingUnmarkPos === pos) {
@@ -773,6 +970,413 @@ function classifyWins(wins) {
   };
 }
 
+// ================================================================
+// PROOF MODAL
+// ================================================================
+async function showProofModal(pos, proofType, squareText, isViewMode) {
+  pendingProofPos       = isViewMode ? null : pos;
+  pendingUnmarkProofPos = isViewMode ? pos  : null;
+
+  const modal     = document.getElementById('proof-modal');
+  const titleEl   = document.getElementById('proof-modal-title');
+  const labelEl   = document.getElementById('proof-square-label');
+  const textArea  = document.getElementById('proof-text-area');
+  const photoSec  = document.getElementById('proof-photo-section');
+  const chooseBtn = document.getElementById('proof-photo-choose-btn');
+  const preview   = document.getElementById('proof-photo-preview');
+  const submitBtn = document.getElementById('proof-submit-btn');
+  const unmarkBtn = document.getElementById('proof-unmark-btn');
+  const cancelBtn = document.getElementById('proof-cancel-btn');
+
+  labelEl.textContent = squareText;
+
+  if (isViewMode) {
+    titleEl.textContent = 'Your Proof';
+    const { data: proofRow } = await db.from('proofs')
+      .select('proof_text, proof_url, proof_type')
+      .eq('game_id', gameId).eq('player_id', playerId).eq('position', pos).single();
+
+    textArea.readOnly      = true;
+    textArea.style.display = proofType === 'text'  ? 'block' : 'none';
+    photoSec.style.display = proofType === 'photo' ? 'block' : 'none';
+    textArea.value = proofRow?.proof_text || '';
+    if (chooseBtn) chooseBtn.style.display = 'none';
+
+    preview.innerHTML = '';
+    preview.style.display = 'none';
+    if (proofType === 'photo' && proofRow?.proof_url) {
+      preview.innerHTML = '<div style="font-size:11px;color:var(--text-muted);padding:8px 0">Loading photo...</div>';
+      preview.style.display = 'block';
+      const signedUrl = await getProofPhotoUrl(proofRow.proof_url);
+      preview.innerHTML = signedUrl
+        ? `<img src="${signedUrl}" style="width:100%;border-radius:4px;margin-top:8px">`
+        : '<div style="font-size:11px;color:var(--text-muted)">Photo unavailable</div>';
+    }
+
+    submitBtn.style.display = 'none';
+    unmarkBtn.style.display = 'block';
+    cancelBtn.textContent   = 'Close';
+  } else {
+    titleEl.textContent    = 'Show Your Proof';
+    textArea.readOnly      = false;
+    textArea.style.display = proofType === 'text'  ? 'block' : 'none';
+    photoSec.style.display = proofType === 'photo' ? 'block' : 'none';
+    if (chooseBtn) chooseBtn.style.display = 'block';
+    textArea.value = '';
+    preview.innerHTML = '';
+    preview.style.display = 'none';
+    submitBtn.style.display = 'block';
+    submitBtn.disabled      = (proofType === 'photo');
+    submitBtn.textContent   = 'Submit Proof ✓';
+    unmarkBtn.style.display = 'none';
+    cancelBtn.textContent   = 'Cancel';
+    if (proofType === 'text') setTimeout(() => textArea.focus(), 100);
+  }
+
+  modal.classList.add('show');
+}
+
+function showProofViewModal(pos, proofType, squareText) {
+  showProofModal(pos, proofType, squareText, true);
+}
+
+async function getProofPhotoUrl(storagePath) {
+  const { data } = await db.storage.from('proofs').createSignedUrl(storagePath, 3600);
+  return data ? data.signedUrl : null;
+}
+
+async function submitProof() {
+  const pos = pendingProofPos;
+  if (pos === null) return;
+
+  const btn = document.getElementById('proof-submit-btn');
+  btn.disabled = true; btn.textContent = 'Submitting...';
+
+  const sq = squaresData[pos];
+  let proofText = null, proofUrl = null;
+
+  if (sq.proof_type === 'text') {
+    proofText = document.getElementById('proof-text-area').value.trim();
+    if (!proofText) { btn.disabled = false; btn.textContent = 'Submit Proof ✓'; return; }
+  } else {
+    const file = document.getElementById('proof-photo-input').files[0];
+    if (!file) { btn.disabled = false; btn.textContent = 'Submit Proof ✓'; return; }
+    const ext  = file.name.split('.').pop();
+    const path = `${gameId}/${playerId}/${pos}.${ext}`;
+    const { error } = await db.storage.from('proofs').upload(path, file, { upsert: true });
+    if (error) {
+      btn.disabled = false; btn.textContent = 'Submit Proof ✓';
+      alert('Upload failed — try again.');
+      return;
+    }
+    proofUrl = path;
+  }
+
+  await db.from('proofs').upsert(
+    { game_id: gameId, player_id: playerId, position: pos, proof_type: sq.proof_type, proof_text: proofText, proof_url: proofUrl },
+    { onConflict: 'game_id,player_id,position' }
+  );
+
+  submittedProofs.add(pos);
+  closeProofModal();
+
+  clearPendingUnmark();
+  myMarks.add(pos);
+  updateWinHighlights();
+  renderScoreboard();
+  buildGrid();
+
+  await db.from('marks').upsert(
+    { game_id: gameId, player_id: playerId, position: pos },
+    { onConflict: 'player_id,game_id,position' }
+  );
+
+  if (myMarks.size === 9 && !seenBingos.has(playerId)) {
+    seenBingos.add(playerId);
+    await db.from('bingo_events').upsert(
+      { game_id: gameId, player_id: playerId, player_name: playerName },
+      { onConflict: 'game_id,player_id' }
+    );
+  }
+
+  const { hasStraight, hasDiag } = classifyWins(checkBingo(myMarks));
+  if (hasStraight && !firstStraightWinnerId) {
+    firstStraightWinnerId = playerId;
+    renderScoreboard();
+    await db.from('first_line_events').insert({ game_id: gameId, player_id: playerId, player_name: playerName, line_type: 'straight' });
+  }
+  if (hasDiag && !firstDiagWinnerId) {
+    firstDiagWinnerId = playerId;
+    renderScoreboard();
+    await db.from('first_line_events').insert({ game_id: gameId, player_id: playerId, player_name: playerName, line_type: 'diagonal' });
+  }
+}
+
+async function confirmUnmarkWithProof(pos) {
+  if (pos === null) return;
+  closeProofModal();
+
+  const { data: proofRow } = await db.from('proofs').select('proof_type, proof_url')
+    .eq('game_id', gameId).eq('player_id', playerId).eq('position', pos).single();
+  if (proofRow && proofRow.proof_type === 'photo' && proofRow.proof_url) {
+    await db.storage.from('proofs').remove([proofRow.proof_url]);
+  }
+  submittedProofs.delete(pos);
+  await db.from('proofs').delete()
+    .eq('game_id', gameId).eq('player_id', playerId).eq('position', pos);
+
+  myMarks.delete(pos);
+  await db.from('marks').delete()
+    .eq('player_id', playerId).eq('game_id', gameId).eq('position', pos);
+
+  updateWinHighlights();
+  renderScoreboard();
+  buildGrid();
+}
+
+function closeProofModal() {
+  document.getElementById('proof-modal').classList.remove('show');
+  pendingProofPos       = null;
+  pendingUnmarkProofPos = null;
+}
+
+function cancelProof() { closeProofModal(); }
+
+// ================================================================
+// SNEAK PEEK
+// ================================================================
+async function openPeek(pid) {
+  const player = allPlayers.find(p => p.id === pid);
+  if (!player) return;
+
+  peekPlayerId = pid;
+  document.getElementById('peek-name').textContent = player.name;
+  document.getElementById('peek-heading-name').textContent = player.name;
+
+  peekMarks = allMarks[pid] || new Set();
+
+  const { data: proofData } = await db.from('proofs')
+    .select('position').eq('game_id', gameId).eq('player_id', pid);
+  peekSubmittedProofs = new Set((proofData || []).map(p => p.position));
+
+  // Log the peek event
+  await db.from('peek_events').insert({ game_id: gameId, peeker_id: playerId, peeked_id: pid });
+  peekCounts[pid] = (peekCounts[pid] || 0) + 1;
+  renderPeekCard();
+
+  buildPeekGrid();
+  document.getElementById('peek-overlay').classList.add('show');
+}
+
+function closePeek() {
+  document.getElementById('peek-overlay').classList.remove('show');
+  peekPlayerId = null;
+  peekMarks = new Set();
+  peekSubmittedProofs = new Set();
+  const peekInput = document.getElementById('peek-comment-input');
+  if (peekInput) peekInput.value = '';
+}
+
+async function loadPeekCounts() {
+  // Fetch only peeks where someone looked at YOUR board
+  const { data } = await db.from('peek_events').select('peeker_id')
+    .eq('game_id', gameId).eq('peeked_id', playerId);
+  peekCounts = {};
+  (data || []).forEach(r => { peekCounts[r.peeker_id] = (peekCounts[r.peeker_id] || 0) + 1; });
+  renderPeekCard();
+}
+
+function renderPeekCard() {
+  const section = document.getElementById('peek-stats-section');
+  const total   = Object.values(peekCounts).reduce((a, b) => a + b, 0);
+  if (total === 0) { section.style.display = 'none'; return; }
+  section.style.display = 'block';
+
+  const c = document.getElementById('peek-stats-rows');
+  c.innerHTML = '';
+  // Only show other players (not yourself — you can't peek at your own board)
+  allPlayers.filter(p => p.id !== playerId).forEach(p => {
+    const count = peekCounts[p.id] || 0;
+    if (count === 0) return;
+    const row = document.createElement('div');
+    row.className = 'peek-stat-row';
+    row.innerHTML = `
+      <div class="sb-dot" style="background:${p.color}"></div>
+      <div class="peek-stat-name">${p.name}</div>
+      <div class="peek-stat-count has-peeks">👁 ${count} peek${count === 1 ? '' : 's'}</div>
+    `;
+    c.appendChild(row);
+  });
+}
+
+// ================================================================
+// COMMENTS / GROUP THREAD
+// ================================================================
+async function loadComments() {
+  const { data } = await db.from('comments')
+    .select('*').eq('group_id', groupId)
+    .order('created_at', { ascending: false })
+    .limit(50);
+  comments = data || [];
+  renderThread();
+}
+
+function renderThread() {
+  const c = document.getElementById('lobby-thread');
+  if (!c) return;
+  c.innerHTML = '';
+  if (comments.length === 0) {
+    c.innerHTML = '<div class="thread-empty">No comments yet — say something!</div>';
+    return;
+  }
+  comments.forEach(cm => {
+    const time = new Date(cm.created_at).toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
+    const peekTag = cm.peek_context
+      ? `<span class="thread-peek-tag">👁 peeking at ${cm.peek_context}</span>`
+      : '';
+    const entry = document.createElement('div');
+    entry.className = 'thread-entry';
+    entry.innerHTML = `
+      <div class="thread-meta">
+        <div class="thread-dot" style="background:${cm.player_color}"></div>
+        <span class="thread-author">${cm.player_name}</span>
+        ${peekTag}
+        <span class="thread-time">${time}</span>
+      </div>
+      <div class="thread-body">${cm.body}</div>
+    `;
+    c.appendChild(entry);
+  });
+  c.scrollTop = 0; // newest comments at top — scroll there after any update
+}
+
+async function postComment(fromPeek) {
+  const inputId = fromPeek ? 'peek-comment-input' : 'lobby-comment-input';
+  const input   = document.getElementById(inputId);
+  if (!input) return;
+  const body = input.value.trim().slice(0, 85);
+  if (!body) return;
+  input.value = '';
+
+  const peekContext = (fromPeek && peekPlayerId)
+    ? (allPlayers.find(p => p.id === peekPlayerId)?.name || null)
+    : null;
+
+  const { data } = await db.from('comments').insert({
+    group_id:     groupId,
+    player_id:    playerId,
+    player_name:  playerName,
+    player_color: playerColor,
+    body,
+    peek_context: peekContext
+  }).select().single();
+
+  if (data) {
+    comments.unshift(data);
+    renderThread();
+  }
+
+  if (fromPeek) {
+    const confirm = document.getElementById('peek-post-confirm');
+    if (confirm) {
+      confirm.style.display = 'block';
+      setTimeout(() => { confirm.style.display = 'none'; }, 4000);
+    }
+  }
+}
+
+function buildPeekGrid() {
+  const grid = document.getElementById('peek-grid');
+  grid.innerHTML = '';
+  const winPos = getWinningPositions(checkBingo(peekMarks));
+  const hasAnyProof = squaresData.some(sq => sq && sq.proof_required);
+  document.getElementById('peek-proof-hint').style.display = hasAnyProof ? 'block' : 'none';
+
+  for (let pos = 0; pos < 9; pos++) {
+    const isMarked = peekMarks.has(pos);
+    const isWin    = winPos.has(pos);
+
+    const cell = document.createElement('div');
+    cell.className = 'cell peek-cell' +
+      (isMarked ? ' marked' : '') +
+      (isWin    ? ' winning' : '');
+    cell.dataset.pos = pos;
+
+    const stamp = document.createElement('div');
+    stamp.className = 'cell-stamp';
+    stamp.textContent = '✓';
+    cell.appendChild(stamp);
+
+    const txt = document.createElement('div');
+    txt.className = 'cell-text';
+    txt.style.whiteSpace = 'pre-line';
+    txt.textContent = squares[pos] || '';
+    cell.appendChild(txt);
+
+    const sq = squaresData[pos];
+    if (sq && sq.proof_required) {
+      if (!isMarked) {
+        const badge = document.createElement('div');
+        badge.className = 'cell-proof-badge';
+        badge.textContent = sq.proof_type === 'photo' ? '📸' : '📝';
+        cell.appendChild(badge);
+      } else if (peekSubmittedProofs.has(pos)) {
+        const proofed = document.createElement('div');
+        proofed.className = 'cell-proofed-badge';
+        proofed.textContent = 'PROOF ✓';
+        cell.appendChild(proofed);
+        cell.classList.add('has-peek-proof');
+        cell.addEventListener('click', () => viewPeekProof(pos, sq.proof_type, sq.text));
+      }
+    }
+
+    grid.appendChild(cell);
+  }
+}
+
+async function viewPeekProof(pos, proofType, squareText) {
+  const modal     = document.getElementById('proof-modal');
+  const titleEl   = document.getElementById('proof-modal-title');
+  const labelEl   = document.getElementById('proof-square-label');
+  const textArea  = document.getElementById('proof-text-area');
+  const photoSec  = document.getElementById('proof-photo-section');
+  const chooseBtn = document.getElementById('proof-photo-choose-btn');
+  const preview   = document.getElementById('proof-photo-preview');
+  const submitBtn = document.getElementById('proof-submit-btn');
+  const unmarkBtn = document.getElementById('proof-unmark-btn');
+  const cancelBtn = document.getElementById('proof-cancel-btn');
+
+  const pName = allPlayers.find(p => p.id === peekPlayerId)?.name || 'Their';
+  titleEl.textContent  = `${pName}'s Proof`;
+  labelEl.textContent  = squareText;
+
+  const { data: proofRow } = await db.from('proofs')
+    .select('proof_text, proof_url, proof_type')
+    .eq('game_id', gameId).eq('player_id', peekPlayerId).eq('position', pos).single();
+
+  textArea.readOnly      = true;
+  textArea.style.display = proofType === 'text'  ? 'block' : 'none';
+  photoSec.style.display = proofType === 'photo' ? 'block' : 'none';
+  textArea.value = proofRow?.proof_text || '';
+  if (chooseBtn) chooseBtn.style.display = 'none';
+
+  preview.innerHTML = '';
+  preview.style.display = 'none';
+  if (proofType === 'photo' && proofRow?.proof_url) {
+    preview.innerHTML = '<div style="font-size:11px;color:var(--text-muted);padding:8px 0">Loading photo...</div>';
+    preview.style.display = 'block';
+    const signedUrl = await getProofPhotoUrl(proofRow.proof_url);
+    preview.innerHTML = signedUrl
+      ? `<img src="${signedUrl}" style="width:100%;border-radius:4px;margin-top:8px">`
+      : '<div style="font-size:11px;color:var(--text-muted)">Photo unavailable</div>';
+  }
+
+  submitBtn.style.display = 'none';
+  unmarkBtn.style.display = 'none';
+  cancelBtn.textContent   = 'Close';
+  modal.classList.add('show');
+}
+
 function updateWinHighlights() {
   if (!gridBuilt) return;
   const winPos = getWinningPositions(checkBingo(myMarks));
@@ -818,6 +1422,10 @@ function renderScoreboard() {
           ? '<div class="sb-first-diag">1ST DIAG ⚡</div>'
           : `<div class="sb-count">${count}/9</div>`;
 
+    const peekBtn = !isYou
+      ? `<button class="sb-peek-btn" onclick="openPeek('${p.id}')">👁 PEEK</button>`
+      : '';
+
     const row = document.createElement('div');
     row.className = 'sb-row' + (isYou?' is-you':'') + (bingo?' has-bingo':'');
     row.id = `sb-${p.id}`;
@@ -827,7 +1435,7 @@ function renderScoreboard() {
         <div class="sb-name">${p.name}${isYou?'<span class="sb-you">YOU</span>':''}</div>
         <div class="sb-bar-bg"><div class="sb-bar-fill${bingo?' bingo-fill':''}" style="width:${pct}%"></div></div>
       </div>
-      <div class="sb-right">${rightBadge}</div>
+      <div class="sb-right">${rightBadge}${peekBtn}</div>
     `;
     c.appendChild(row);
   });
@@ -894,6 +1502,17 @@ function subscribeRealtime() {
     })
 
     .on('postgres_changes', {
+      event: 'INSERT', schema: 'public', table: 'peek_events'
+    }, payload => {
+      const evt = payload.new;
+      if (!evt || evt.game_id !== gameId) return;
+      // Only update our card if someone peeked at OUR board
+      if (evt.peeked_id !== playerId) return;
+      peekCounts[evt.peeker_id] = (peekCounts[evt.peeker_id] || 0) + 1;
+      renderPeekCard();
+    })
+
+    .on('postgres_changes', {
       event: 'UPDATE', schema: 'public', table: 'games'
     }, async payload => {
       const updated = payload.new;
@@ -921,6 +1540,16 @@ function subscribeRealtime() {
         await showLobby();
       }
       // A new game activating while player is in another game — do nothing, they can switch via lobby
+    })
+
+    .on('postgres_changes', {
+      event: 'INSERT', schema: 'public', table: 'comments'
+    }, payload => {
+      const cm = payload.new;
+      if (!cm || cm.group_id !== groupId) return;
+      if (comments.some(c => c.id === cm.id)) return; // already added optimistically
+      comments.unshift(cm);
+      renderThread();
     })
 
     .subscribe();
@@ -994,6 +1623,15 @@ function showError(msg) {
   document.getElementById('error-message').textContent = msg;
   document.getElementById('screen-error').classList.add('show');
 }
+document.getElementById('proof-photo-input').addEventListener('change', function() {
+  const file = this.files[0];
+  if (!file) return;
+  const preview = document.getElementById('proof-photo-preview');
+  preview.innerHTML = `<img src="${URL.createObjectURL(file)}" style="width:100%;border-radius:4px;margin-top:8px">`;
+  preview.style.display = 'block';
+  document.getElementById('proof-submit-btn').disabled = false;
+});
+
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => {}));
 }

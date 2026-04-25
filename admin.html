@@ -134,6 +134,11 @@ input::placeholder, textarea::placeholder { color:var(--text-muted); opacity:1; 
 }
 .sq-ta:focus { border-color:var(--amber-dim); }
 .sq-free { aspect-ratio:1; display:flex; align-items:center; justify-content:center; background:var(--amber-dark); border:2px solid var(--amber-dim); border-radius:4px; color:var(--amber); font-size:11px; font-weight:900; text-align:center; line-height:1.3; }
+.sq-proof-row { display:flex; align-items:center; gap:6px; margin-top:5px; flex-wrap:wrap; }
+.sq-proof-label { display:flex; align-items:center; gap:5px; font-size:9px; letter-spacing:1px; color:var(--text-muted); cursor:pointer; user-select:none; }
+.sq-proof-label input[type="checkbox"] { accent-color:var(--amber); width:13px; height:13px; cursor:pointer; }
+.sq-proof-type { background:var(--bg3); border:1px solid var(--border); border-radius:3px; color:var(--text); font-family:var(--font); font-size:10px; padding:3px 6px; cursor:pointer; }
+.sq-wrap.has-proof .sq-ta { border-color:var(--amber-dim); }
 
 /* Views */
 .view { display:none; }
@@ -155,6 +160,7 @@ input::placeholder, textarea::placeholder { color:var(--text-muted); opacity:1; 
 .sb-bingo { font-size:10px; letter-spacing:1px; color:var(--bg); background:var(--amber); padding:3px 7px; border-radius:2px; font-weight:900; white-space:nowrap; }
 .sb-first-line { font-size:10px; letter-spacing:1px; color:var(--bg); background:#7a8fa8; padding:3px 7px; border-radius:2px; font-weight:900; white-space:nowrap; }
 .sb-first-diag { font-size:10px; letter-spacing:1px; color:var(--bg); background:#5ad4e8; padding:3px 7px; border-radius:2px; font-weight:900; white-space:nowrap; }
+.sb-proof-count { display:inline-block; font-size:9px; letter-spacing:1px; color:var(--amber); margin-left:6px; opacity:0.8; }
 
 /* Scoreboard game tabs */
 .sb-tabs { display:flex; gap:0; border-bottom:2px solid var(--border); overflow-x:auto; margin-bottom:14px; -webkit-overflow-scrolling:touch; }
@@ -293,6 +299,7 @@ let scoreboardGameId = null;
 let adminFirstStraightId = null;
 let adminFirstDiagId     = null;
 let adminCheckedInIds    = new Set();
+let adminProofCounts     = {};
 let realtimeChannel = null;
 
 // ----------------------------------------------------------------
@@ -592,7 +599,15 @@ async function showGameEditor(gid) {
     const { data: sqData } = await db.from('squares').select('*').eq('game_id', gid);
     (sqData || []).forEach(s => {
       const ta = document.querySelector(`#editor-grid textarea[data-pos="${s.position}"]`);
-      if (ta) ta.value = s.text;
+      if (ta) {
+        ta.value = s.text;
+        if (s.proof_required) {
+          const cb = document.querySelector(`[data-proof-pos="${s.position}"]`);
+          if (cb) { cb.checked = true; toggleProofUI(s.position, true); }
+          const sel = document.querySelector(`[data-proof-type-pos="${s.position}"]`);
+          if (sel && s.proof_type) sel.value = s.proof_type;
+        }
+      }
     });
   } else {
     document.getElementById('game-name-input').value = `Game ${allGames.length + 1}`;
@@ -616,8 +631,29 @@ function buildEditorGrid() {
     ta.className = 'sq-ta'; ta.dataset.pos = pos; ta.rows = 4;
     ta.placeholder = `Square ${pos + 1}`;
     wrap.appendChild(num); wrap.appendChild(ta);
+
+    const proofRow = document.createElement('div');
+    proofRow.className = 'sq-proof-row';
+    proofRow.innerHTML = `
+      <label class="sq-proof-label">
+        <input type="checkbox" data-proof-pos="${pos}" onchange="toggleProofUI(${pos},this.checked)">
+        PROOF REQUIRED
+      </label>
+      <select class="sq-proof-type" data-proof-type-pos="${pos}" style="display:none">
+        <option value="text">📝 Text</option>
+        <option value="photo">📸 Photo</option>
+      </select>
+    `;
+    wrap.appendChild(proofRow);
     grid.appendChild(wrap);
   }
+}
+
+function toggleProofUI(pos, required) {
+  const sel = document.querySelector(`[data-proof-type-pos="${pos}"]`);
+  if (sel) sel.style.display = required ? 'inline-block' : 'none';
+  const wrap = document.querySelector(`#editor-grid .sq-wrap:nth-child(${pos + 1})`);
+  if (wrap) wrap.classList.toggle('has-proof', required);
 }
 
 async function saveGame(andActivate) {
@@ -627,7 +663,15 @@ async function saveGame(andActivate) {
   const tas = document.querySelectorAll('#editor-grid textarea');
   const squareRows = [];
   tas.forEach(ta => {
-    squareRows.push({ position: +ta.dataset.pos, text: ta.value.trim() || '(blank)' });
+    const pos = +ta.dataset.pos;
+    const cb  = document.querySelector(`[data-proof-pos="${pos}"]`);
+    const sel = document.querySelector(`[data-proof-type-pos="${pos}"]`);
+    squareRows.push({
+      position:       pos,
+      text:           ta.value.trim() || '(blank)',
+      proof_required: cb ? cb.checked : false,
+      proof_type:     (cb && cb.checked && sel) ? sel.value : null
+    });
   });
 
   const btn = document.getElementById('btn-save-activate');
@@ -733,6 +777,10 @@ async function loadActiveGameScores() {
   const { data: ciRows } = await db.from('check_ins').select('player_id').eq('game_id', activeGameId);
   (ciRows || []).forEach(r => adminCheckedInIds.add(r.player_id));
 
+  const { data: proofRows } = await db.from('proofs').select('player_id').eq('game_id', activeGameId);
+  adminProofCounts = {};
+  (proofRows || []).forEach(r => { adminProofCounts[r.player_id] = (adminProofCounts[r.player_id] || 0) + 1; });
+
   renderAdminScoreboard();
 }
 
@@ -757,6 +805,7 @@ function renderAdminScoreboard() {
     const pct        = Math.round(count / 9 * 100);
     const firstLine  = !bingo && p.id === adminFirstStraightId;
     const firstDiag  = !bingo && !firstLine && p.id === adminFirstDiagId;
+    const proofCount = adminProofCounts[p.id] || 0;
 
     const rightBadge = bingo
       ? '<div class="sb-bingo">PROOFINGO 🎯</div>'
@@ -766,11 +815,15 @@ function renderAdminScoreboard() {
           ? '<div class="sb-first-diag">1ST DIAG ⚡</div>'
           : `<div class="sb-count">${count}/9</div>`;
 
+    const proofBadge = proofCount > 0
+      ? `<div class="sb-proof-count">📝 ${proofCount}</div>`
+      : '';
+
     const row = document.createElement('div');
     row.className = 'sb-row';
     row.innerHTML = `
       <div class="sb-dot" style="background:${p.color}"></div>
-      <div class="sb-name">${p.name}</div>
+      <div class="sb-name">${p.name}${proofBadge}</div>
       <div class="sb-bar-bg"><div class="sb-bar-fill${bingo?' bingo':''}" style="width:${pct}%"></div></div>
       ${rightBadge}
     `;
