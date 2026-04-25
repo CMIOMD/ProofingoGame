@@ -90,6 +90,12 @@ input::placeholder, textarea::placeholder { color:var(--text-muted); opacity:1; 
 .spinner { display:inline-block; width:13px; height:13px; border:2px solid rgba(0,207,232,0.2); border-top-color:var(--amber); border-radius:50%; animation:spin .6s linear infinite; flex-shrink:0; }
 @keyframes spin { to { transform:rotate(360deg); } }
 
+/* Full-screen group loading overlay */
+#admin-loading { display:none; position:fixed; inset:0; z-index:200; flex-direction:column; align-items:center; justify-content:center; gap:16px; background:var(--bg); }
+#admin-loading.show { display:flex; }
+#admin-loading .lg-spinner { width:24px; height:24px; border:2px solid rgba(0,207,232,0.2); border-top-color:var(--amber); border-radius:50%; animation:spin .6s linear infinite; }
+#admin-loading p { font-size:11px; letter-spacing:3px; color:var(--text-muted); text-transform:uppercase; }
+
 /* Player rows */
 .player-setup-row { display:flex; align-items:center; gap:10px; background:var(--bg2); border:2px solid var(--border); border-radius:4px; padding:10px 12px; margin-bottom:8px; box-shadow:0 2px 8px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.03); }
 .player-setup-row .dot { width:13px; height:13px; border-radius:50%; flex-shrink:0; }
@@ -172,6 +178,10 @@ input::placeholder, textarea::placeholder { color:var(--text-muted); opacity:1; 
 </style>
 </head>
 <body>
+<div id="admin-loading">
+  <div class="lg-spinner"></div>
+  <p>Loading group...</p>
+</div>
 <div class="page">
   <div class="topnav">
     <a href="index.html">← HOME</a>
@@ -317,7 +327,9 @@ window.addEventListener('DOMContentLoaded', async () => {
 
   if (!isNew && urlGid) {
     groupId = urlGid;
+    document.getElementById('admin-loading').classList.add('show');
     const ok = await loadGroup();
+    document.getElementById('admin-loading').classList.remove('show');
     if (ok) { switchView('dashboard'); return; }
   }
 

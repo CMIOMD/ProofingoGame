@@ -69,10 +69,10 @@ body::before {
   </div>
   <div class="tagline">Show Your Proof Edition</div>
 
+  <a href="admin.html?new=1" class="btn btn-primary" id="btn-create">+ Create a Group</a>
+
   <!-- Existing admin groups shown here if stored -->
   <div id="admin-groups"></div>
-
-  <a href="admin.html?new=1" class="btn btn-primary" id="btn-create">+ Create a Group</a>
 
   <div class="divider">— OR RESUME BY ID —</div>
 
@@ -164,8 +164,6 @@ async function loadAllGroups() {
     container.insertAdjacentHTML('beforeend', '<div style="font-size:9px;color:#7a8fa8;letter-spacing:2px;text-align:center;margin:4px 0 12px;text-transform:uppercase">↑ Tap any group above to enter ↑</div>');
   }
 
-  container.insertAdjacentHTML('beforeend', '<div class="section-divider">— OR CREATE NEW —</div>');
-  document.getElementById('btn-create').textContent = '+ Create a Group';
 }
 
 loadAllGroups();
