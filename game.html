@@ -222,7 +222,15 @@ body::before {
 .comment-input { flex:1; padding:10px 12px; background:var(--bg2); border:2px solid var(--border); border-radius:4px; color:var(--text); font-family:var(--font); font-size:14px; outline:none; transition:border-color .15s; -webkit-appearance:none; }
 .comment-input:focus { border-color:var(--amber-dim); }
 .comment-send-btn { padding:10px 14px; background:var(--amber); color:var(--bg); border:none; border-radius:4px; font-family:var(--font); font-size:10px; font-weight:900; letter-spacing:2px; cursor:pointer; touch-action:manipulation; -webkit-tap-highlight-color:transparent; flex-shrink:0; }
-.lobby-thread { display:flex; flex-direction:column; gap:8px; height:min(340px,38dvh); overflow-y:scroll; -webkit-overflow-scrolling:touch; overscroll-behavior-y:contain; touch-action:pan-y; padding-right:2px; }
+.game-thread-pair { display:flex; flex-direction:column; gap:10px; margin-bottom:16px; }
+@media (min-width:560px) {
+  .game-thread-pair { flex-direction:row; align-items:start; }
+  .game-thread-pair .lobby-game-card { flex:1; min-width:0; }
+  .game-thread-card { flex:1; min-width:0; }
+}
+.game-thread-card { background:var(--bg2); border:2px solid var(--border); border-radius:5px; padding:14px; }
+.game-thread-label { font-size:10px; letter-spacing:3px; color:var(--text-muted); text-transform:uppercase; margin-bottom:10px; }
+.per-game-thread { display:flex; flex-direction:column; gap:8px; height:min(220px,28dvh); overflow-y:scroll; -webkit-overflow-scrolling:touch; overscroll-behavior-y:contain; touch-action:pan-y; padding-right:2px; }
 .thread-entry { background:var(--bg2); border:2px solid var(--border); border-radius:4px; padding:10px 12px; }
 .thread-meta { display:flex; align-items:center; gap:7px; margin-bottom:5px; flex-wrap:wrap; }
 .thread-dot { width:9px; height:9px; border-radius:50%; flex-shrink:0; }
@@ -325,14 +333,6 @@ body::before {
     <div id="lobby-players"></div>
     <div class="lobby-slabel">Games</div>
     <div id="lobby-game-status"></div>
-    <div class="lobby-slabel" style="margin-top:24px">💬 Group Thread</div>
-    <div class="comment-input-wrap">
-      <input type="text" id="lobby-comment-input" class="comment-input"
-        placeholder="Say something… (85 chars)" maxlength="85"
-        onkeydown="if(event.key==='Enter')postComment(false)">
-      <button class="comment-send-btn" onclick="postComment(false)">POST</button>
-    </div>
-    <div id="lobby-thread" class="lobby-thread"></div>
   </div>
 </div>
 
@@ -475,7 +475,7 @@ let peekPlayerId        = null;
 let peekMarks           = new Set();
 let peekSubmittedProofs = new Set();
 let peekCounts          = {};
-let comments            = [];
+let commentsByGame      = {};
 
 // ================================================================
 // SESSION STORAGE — multi-group, multi-admin support
@@ -637,7 +637,7 @@ async function showLobby() {
   renderLobbyPlayers();
   renderLobbyGames(games || []);
 
-  await loadComments();
+  await loadComments(games || []);
   hideLoading();
   subscribeRealtime();
   document.getElementById('screen-lobby').classList.add('show');
@@ -675,6 +675,9 @@ function renderLobbyGames(games) {
   }
 
   games.forEach(game => {
+    const pair = document.createElement('div');
+    pair.className = 'game-thread-pair';
+
     const card = document.createElement('div');
     if (game.status === 'active') {
       const ciSet = gameCheckedInIds[game.id] || new Set();
@@ -712,7 +715,23 @@ function renderLobbyGames(games) {
         <div class="lobby-waiting-msg" style="padding-top:8px">The admin will start this game soon.</div>
       `;
     }
-    c.appendChild(card);
+
+    const threadCard = document.createElement('div');
+    threadCard.className = 'game-thread-card';
+    threadCard.innerHTML = `
+      <div class="game-thread-label">💬 Thread</div>
+      <div class="comment-input-wrap">
+        <input type="text" id="comment-input-${game.id}" class="comment-input"
+          placeholder="Say something… (85 chars)" maxlength="85"
+          onkeydown="if(event.key==='Enter')postComment(false,'${game.id}')">
+        <button class="comment-send-btn" onclick="postComment(false,'${game.id}')">POST</button>
+      </div>
+      <div id="thread-${game.id}" class="per-game-thread"></div>
+    `;
+
+    pair.appendChild(card);
+    pair.appendChild(threadCard);
+    c.appendChild(pair);
   });
 }
 
@@ -735,6 +754,13 @@ async function checkIn(gid) {
     .eq('group_id', groupId).neq('status', 'finished')
     .order('created_at', { ascending: true });
   renderLobbyGames(games || []);
+  renderAllThreads();
+}
+
+function renderAllThreads() {
+  document.querySelectorAll('[id^="thread-"]').forEach(el => {
+    renderThread(el.id.replace('thread-', ''));
+  });
 }
 
 // ================================================================
@@ -1212,24 +1238,31 @@ function renderPeekCard() {
 // ================================================================
 // COMMENTS / GROUP THREAD
 // ================================================================
-async function loadComments() {
+async function loadComments(games) {
+  commentsByGame = {};
+  const ids = (games || []).map(g => g.id);
+  if (!ids.length) return;
+  ids.forEach(id => { commentsByGame[id] = []; });
   const { data } = await db.from('comments')
-    .select('*').eq('group_id', groupId)
+    .select('*').in('game_id', ids)
     .order('created_at', { ascending: false })
-    .limit(50);
-  comments = data || [];
-  renderThread();
+    .limit(200);
+  (data || []).forEach(cm => {
+    if (cm.game_id && commentsByGame[cm.game_id]) commentsByGame[cm.game_id].push(cm);
+  });
+  ids.forEach(id => renderThread(id));
 }
 
-function renderThread() {
-  const c = document.getElementById('lobby-thread');
+function renderThread(gid) {
+  const c = document.getElementById(`thread-${gid}`);
   if (!c) return;
   c.innerHTML = '';
-  if (comments.length === 0) {
+  const cms = commentsByGame[gid] || [];
+  if (cms.length === 0) {
     c.innerHTML = '<div class="thread-empty">No comments yet — say something!</div>';
     return;
   }
-  comments.forEach(cm => {
+  cms.forEach(cm => {
     const time = new Date(cm.created_at).toLocaleString([], { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' });
     const peekTag = cm.peek_context
       ? `<span class="thread-peek-tag">👁 peeking at ${cm.peek_context}</span>`
@@ -1247,11 +1280,12 @@ function renderThread() {
     `;
     c.appendChild(entry);
   });
-  c.scrollTop = 0; // newest comments at top — scroll there after any update
+  c.scrollTop = 0;
 }
 
-async function postComment(fromPeek) {
-  const inputId = fromPeek ? 'peek-comment-input' : 'lobby-comment-input';
+async function postComment(fromPeek, gid) {
+  const targetGameId = fromPeek ? gameId : gid;
+  const inputId = fromPeek ? 'peek-comment-input' : `comment-input-${gid}`;
   const input   = document.getElementById(inputId);
   if (!input) return;
   const body = input.value.trim().slice(0, 85);
@@ -1264,6 +1298,7 @@ async function postComment(fromPeek) {
 
   const { data } = await db.from('comments').insert({
     group_id:     groupId,
+    game_id:      targetGameId,
     player_id:    playerId,
     player_name:  playerName,
     player_color: playerColor,
@@ -1272,8 +1307,9 @@ async function postComment(fromPeek) {
   }).select().single();
 
   if (data) {
-    comments.unshift(data);
-    renderThread();
+    if (!commentsByGame[targetGameId]) commentsByGame[targetGameId] = [];
+    commentsByGame[targetGameId].unshift(data);
+    if (!fromPeek) renderThread(targetGameId);
   }
 
   if (fromPeek) {
@@ -1498,6 +1534,7 @@ function subscribeRealtime() {
           .eq('group_id', groupId).neq('status', 'finished')
           .order('created_at', { ascending: true });
         renderLobbyGames(games || []);
+        renderAllThreads();
       }
     })
 
@@ -1528,6 +1565,7 @@ function subscribeRealtime() {
           .eq('group_id', groupId).neq('status', 'finished')
           .order('created_at', { ascending: true });
         renderLobbyGames(games || []);
+        renderAllThreads();
         return;
       }
 
@@ -1546,10 +1584,11 @@ function subscribeRealtime() {
       event: 'INSERT', schema: 'public', table: 'comments'
     }, payload => {
       const cm = payload.new;
-      if (!cm || cm.group_id !== groupId) return;
-      if (comments.some(c => c.id === cm.id)) return; // already added optimistically
-      comments.unshift(cm);
-      renderThread();
+      if (!cm || cm.group_id !== groupId || !cm.game_id) return;
+      if ((commentsByGame[cm.game_id] || []).some(c => c.id === cm.id)) return;
+      if (!commentsByGame[cm.game_id]) commentsByGame[cm.game_id] = [];
+      commentsByGame[cm.game_id].unshift(cm);
+      renderThread(cm.game_id);
     })
 
     .subscribe();
